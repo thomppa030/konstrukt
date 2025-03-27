@@ -1,0 +1,178 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# --- Indentation and Spacing ---
+IndentWidth: 2                     # Use 2 spaces for indentation
+TabWidth: 2                        # Tab width (though we don't use tabs)
+UseTab: Never                      # No tabs, only spaces
+ContinuationIndentWidth: 4         # Indent wrapped lines by 4 spaces
+IndentCaseLabels: false            # Don't indent case labels in switch statements
+NamespaceIndentation: All          # Indent contents of namespace declarations
+IndentPPDirectives: AfterHash      # Consistent indentation for preprocessor directives
+IndentExternBlock: AfterExternBlock # Consistent indentation for extern blocks
+IndentGotoLabels: false            # Don't indent goto labels
+IndentRequires: true               # Indent requires clauses in C++20
+LambdaBodyIndentation: Signature   # Align lambda body with signature
+
+# --- Braces and Blocks ---
+BreakBeforeBraces: Custom          # Custom brace breaking rules
+BraceWrapping:
+  AfterCaseLabel: false            # No break before braces after case label
+  AfterClass: false                # No break before braces after class declaration
+  AfterControlStatement: Never     # No break before braces after control statements (if/for/while/switch/etc)
+  AfterEnum: false                 # No break before braces after enum declaration
+  AfterFunction: false             # No break before braces after function declaration
+  AfterNamespace: false            # No break before braces after namespace declaration
+  AfterStruct: false               # No break before braces after struct declaration
+  AfterUnion: false                # No break before braces after union declaration
+  AfterExternBlock: false          # No break before braces after extern block
+  BeforeCatch: false               # No break before catch
+  BeforeElse: false                # No break before else
+  BeforeLambdaBody: false          # No break before lambda body
+  BeforeWhile: false               # No break before while in do-while
+InsertBraces: true                 # Insert braces for single-line control statements
+Cpp11BracedListStyle: true         # Format braced lists in C++11 style
+
+# --- Line Breaks and Wrapping ---
+ColumnLimit: 100                   # Maximum line length
+AllowShortBlocksOnASingleLine: Empty    # Allow empty blocks on a single line
+AllowShortIfStatementsOnASingleLine: Never # Never allow short if statements on a single line
+AllowShortLoopsOnASingleLine: false     # Don't allow short loops on a single line
+AllowShortCaseLabelsOnASingleLine: false # Don't allow short case labels on a single line
+AllowShortEnumsOnASingleLine: false     # Don't allow short enums on a single line
+AllowShortLambdasOnASingleLine: Inline  # Allow short lambdas on a single line if they're inline
+AlwaysBreakAfterReturnType: None        # Don't break after return type
+AlwaysBreakBeforeMultilineStrings: true # Break before multiline strings
+AlwaysBreakTemplateDeclarations: Yes    # Always break before template declarations
+BreakBeforeBinaryOperators: None        # Don't break before binary operators
+BreakBeforeTernaryOperators: true       # Break before ternary operators
+BreakConstructorInitializers: BeforeColon # Break constructor initializers before colons
+BreakInheritanceList: BeforeColon       # Break inheritance list before colons
+BreakStringLiterals: true               # Break long string literals
+
+# --- Alignment and Formatting ---
+AlignAfterOpenBracket: BlockIndent      # Align block after open bracket
+AlignArrayOfStructures: Left            # Align arrays of structures
+AlignConsecutiveAssignments:
+  Enabled: true                         # Align consecutive assignments
+  AcrossEmptyLines: false               # Don't align across empty lines
+  AcrossComments: false                 # Don't align across comments
+AlignConsecutiveBitFields:
+  Enabled: true                         # Align consecutive bit fields
+  AcrossEmptyLines: false               # Don't align across empty lines
+  AcrossComments: false                 # Don't align across comments
+AlignConsecutiveDeclarations:
+  Enabled: false                        # Don't align consecutive declarations
+AlignConsecutiveMacros:
+  Enabled: true                         # Align consecutive macros
+  AcrossEmptyLines: false               # Don't align across empty lines
+  AcrossComments: false                 # Don't align across comments
+AlignEscapedNewlines: Left              # Align escaped newlines to the left
+AlignOperands: Align                    # Align operands
+AlignTrailingComments:
+  Kind: Always                          # Always align trailing comments
+  OverEmptyLines: 1                     # Align over at most 1 empty line
+PointerAlignment: Left                  # Align pointers to the left (with the type)
+ReferenceAlignment: Left                # Align references to the left (with the type)
+QualifierAlignment: Leave               # Leave qualifier alignment as-is
+
+# --- Spacing ---
+SpaceAfterCStyleCast: false             # No space after C-style cast
+SpaceAfterLogicalNot: false             # No space after logical not (!)
+SpaceAfterTemplateKeyword: true         # Space after template keyword
+SpaceAroundPointerQualifiers: Default   # Default space around pointer qualifiers
+SpaceBeforeAssignmentOperators: true    # Space before assignment operators
+SpaceBeforeCaseColon: false             # No space before case colon
+SpaceBeforeCpp11BracedList: false       # No space before C++11 braced list
+SpaceBeforeCtorInitializerColon: true   # Space before constructor initializer colon
+SpaceBeforeInheritanceColon: true       # Space before inheritance colon
+SpaceBeforeParens: ControlStatements    # Space before parentheses in control statements
+SpaceBeforeRangeBasedForLoopColon: true # Space before range-based for loop colon
+SpaceBeforeSquareBrackets: false        # No space before square brackets
+SpaceInEmptyBlock: false                # No space in empty block
+SpaceInEmptyParentheses: false          # No space in empty parentheses
+SpacesInAngles: Never                   # Never spaces in angles
+SpacesInCStyleCastParentheses: false    # No spaces in C-style cast parentheses
+SpacesInConditionalStatement: false     # No spaces in conditional statement
+SpacesInContainerLiterals: false        # No spaces in container literals
+SpacesInLineCommentPrefix:
+  Minimum: 1                            # Minimum 1 space in line comment prefix
+  Maximum: 1                            # Maximum 1 space in line comment prefix
+SpacesInParentheses: false              # Never spaces in parentheses
+SpacesInSquareBrackets: false           # No spaces in square brackets
+
+# --- Comments and Documentation ---
+ReflowComments: true                    # Automatically reflow comments
+CommentPragmas: '^ IWYU pragma:'        # Pragma comment format
+FixNamespaceComments: true              # Add missing namespace comments
+
+# --- Line Management ---
+KeepEmptyLinesAtTheStartOfBlocks: false # Remove empty lines at the start of blocks
+MaxEmptyLinesToKeep: 1                  # Keep at most 1 empty line
+EmptyLineAfterAccessModifier: Never     # No empty line after access modifier
+EmptyLineBeforeAccessModifier: Always   # Empty line before access modifier
+InsertNewlineAtEOF: true                # Insert newline at EOF
+
+# --- Penalties (control formatting decisions) ---
+PenaltyBreakAssignment: 2               # Penalty for breaking assignment
+PenaltyBreakBeforeFirstCallParameter: 1 # Low penalty for breaking before first call parameter
+PenaltyBreakComment: 300                # High penalty for breaking comments
+PenaltyBreakFirstLessLess: 120          # Penalty for breaking << operator
+PenaltyBreakString: 1000                # High penalty for breaking strings
+PenaltyBreakTemplateDeclaration: 10     # Penalty for breaking template declaration
+PenaltyExcessCharacter: 1000000         # Very high penalty for excess characters (prevent exceeding column limit)
+PenaltyIndentedWhitespace: 0            # No penalty for indented whitespace
+PenaltyReturnTypeOnItsOwnLine: 60       # Moderate penalty for returning type on its own line
+
+# --- Function and Parameter Formatting ---
+AllowAllArgumentsOnNextLine: false      # Don't allow all arguments on next line if they don't fit
+AllowAllParametersOfDeclarationOnNextLine: false # Don't allow all parameters on next line
+AllowShortFunctionsOnASingleLine: Inline # Allow short functions on a single line if they're inline
+BinPackArguments: false                 # Don't bin-pack arguments
+BinPackParameters: false                # Don't bin-pack parameters
+
+# --- Include Formatting ---
+SortIncludes: CaseSensitive             # Sort includes case-sensitively
+IncludeBlocks: Regroup                  # Regroup include blocks
+IncludeCategories:
+  - Regex: '^<[a-z_]+>'                 # C standard library headers (e.g. <stdio.h>)
+    Priority: 1
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^<(gtest|gmock|catch2)/'    # Test framework headers
+    Priority: 2
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^<[^/]*\.h>'                # C++ standard library headers (e.g. <vector>)
+    Priority: 3
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^<.*>'                      # Other system headers
+    Priority: 4
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^".*"'                      # Project headers
+    Priority: 5
+    SortPriority: 0
+    CaseSensitive: false
+
+# --- Special Case Formatting ---
+AttributeMacros: ['__capability', '__output', '__ununsed']  # Macros that behave like attributes
+BitFieldColonSpacing: Both              # Space on both sides of bit field colon
+ForEachMacros: ['RANGES_FOR', 'FOREACH', 'BOOST_FOREACH']  # Macros to be interpreted as foreach loops
+IfMacros: ['IF']                        # Macros to be interpreted as if statements
+MacroBlockBegin: ''                     # Regex for macro block begin
+MacroBlockEnd: ''                       # Regex for macro block end
+NamespaceMacros: ['NAMESPACE']          # Macros to be interpreted as namespace declarations
+StatementAttributeLikeMacros: ['Q_EMIT'] # Macros that behave like statement attributes
+StatementMacros: ['Q_UNUSED', 'QT_REQUIRE_VERSION'] # Macros to be interpreted as complete statements
+TypenameMacros: ['STACK_OF', 'LIST']    # Macros to be interpreted as type declarations
+WhitespaceSensitiveMacros: ['STRINGIZE', 'PP_STRINGIZE'] # Macros sensitive to whitespace changes
+
+# --- Other Settings ---
+DeriveLineEnding: false                 # Don't derive line ending from input
+LineEnding: LF                          # Use LF line ending
+DerivePointerAlignment: false           # Don't derive pointer alignment
+UseCRLF: false                          # Don't use CRLF line endings
+...
