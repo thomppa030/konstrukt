@@ -87,4 +87,37 @@ namespace kst::core {
     BC7_UNORM, // Block Compression 7 (high quality)
     BC7_SRGB
   };
+
+  /**
+   *  Describes how a resource can be used by the GPU
+   *  Can have multiple usage flags combined with bitwise OR
+   */
+  enum BufferUsageFlags : std::uint8_t {
+    NONE              = 0,
+    VERTEX_BUFFER     = 1U << 0U, // Buffer can be used as a vertex buffer
+    INDEX_BUFFER      = 1U << 1U, // Buffer can be used as an index buffer
+    UNIFORM_BUFFER    = 1U << 2U, // Buffer can be used as a uniform buffer
+    STORAGE_BUFFER    = 1U << 3U, // Buffer can be used as a storage buffer
+    INDIRECT_BUFFER   = 1U << 4U, // Buffer can be used for indirect draw commands
+    TRANSFER_SRC      = 1U << 5U, // Buffer can be used as a source for copy commands
+    TRANSFER_DST      = 1U << 6U, // Buffer can be used as a destination for copy commands
+    RAYTRACING_BUFFER = 1U << 7U, // Buffer can be used for ray tracing acceleration structures
+  };
+
+  inline auto operator|(BufferUsageFlags flagA, BufferUsageFlags flagB) -> BufferUsageFlags {
+    return static_cast<BufferUsageFlags>(
+        static_cast<std::uint8_t>(flagA) | static_cast<std::uint8_t>(flagB)
+    );
+  }
+
+  inline auto operator&(BufferUsageFlags flagA, BufferUsageFlags flagB) -> BufferUsageFlags {
+    return static_cast<BufferUsageFlags>(
+        static_cast<std::uint8_t>(flagA) & static_cast<std::uint8_t>(flagB)
+    );
+  }
+
+  inline auto operator|=(BufferUsageFlags& flagA, BufferUsageFlags& flagB) -> BufferUsageFlags& {
+    return flagA = flagA | flagB;
+  }
+
 } // namespace kst::core
