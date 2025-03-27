@@ -300,7 +300,7 @@ CheckOptions:
   - key: 'readability-identifier-naming.ScopedEnumCase'
     value: 'CamelCase'
   - key: 'readability-identifier-naming.ScopedEnumConstantCase'
-    value: 'CamelCase'
+    value: 'UPPER_CASE'
 
   # Template parameters use CamelCase
   - key: 'readability-identifier-naming.TemplateParameterCase'
