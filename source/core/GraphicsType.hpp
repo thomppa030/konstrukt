@@ -7,7 +7,7 @@ namespace kst::core {
   /**
    *  Pixel formats for textures, render targets and other image resources
    */
-  enum Format : std::uint8_t {
+  enum class Format : std::uint8_t {
     UNKNOWN,
     R8_UNORM,   // 8-bit red channel (normalized)
     R8_SNORM,   // 8-bit red channel (signed normalized)
@@ -92,7 +92,7 @@ namespace kst::core {
    *  Describes how a resource can be used by the GPU
    *  Can have multiple usage flags combined with bitwise OR
    */
-  enum BufferUsageFlags : std::uint8_t {
+  enum class BufferUsageFlags : std::uint8_t {
     NONE              = 0,
     VERTEX_BUFFER     = 1U << 0U, // Buffer can be used as a vertex buffer
     INDEX_BUFFER      = 1U << 1U, // Buffer can be used as an index buffer
@@ -117,6 +117,37 @@ namespace kst::core {
   }
 
   inline auto operator|=(BufferUsageFlags& flagA, BufferUsageFlags& flagB) -> BufferUsageFlags& {
+    return flagA = flagA | flagB;
+  }
+
+  /**
+   *  Describes how a texture can be used by the GPU
+   *  Can have multiple usage flags combined with bitwise OR
+   */
+  enum class TextureUsageFlags : std::uint8_t {
+    NONE             = 0,
+    SAMPLED          = 1U << 0U, // Texture can be sampled in a shader
+    STORAGE          = 1U << 1U, // Texture can be used as a storage image
+    COLOR_ATTACHMENT = 1U << 2U, // Texture can be used as a color attachment
+    DEPTH_STENCIL    = 1U << 3U, // Texture can be used as a depth/stencil attachment
+    TRANSFER_SRC     = 1U << 4U, // Texture can be used as a source for copy commands
+    TRANSFER_DST     = 1U << 5U, // Texture can be used as a destination for copy commands
+    INPUT_ATTACHMENT = 1U << 6U, // Texture can be used as an input attachment
+  };
+
+  inline auto operator|(TextureUsageFlags flagA, TextureUsageFlags flagB) -> TextureUsageFlags {
+    return static_cast<TextureUsageFlags>(
+        static_cast<std::uint8_t>(flagA) | static_cast<std::uint8_t>(flagB)
+    );
+  }
+
+  inline auto operator&(TextureUsageFlags flagA, TextureUsageFlags flagB) -> TextureUsageFlags {
+    return static_cast<TextureUsageFlags>(
+        static_cast<std::uint8_t>(flagA) & static_cast<std::uint8_t>(flagB)
+    );
+  }
+
+  inline auto operator|=(TextureUsageFlags& flagA, TextureUsageFlags& flagB) -> TextureUsageFlags& {
     return flagA = flagA | flagB;
   }
 
