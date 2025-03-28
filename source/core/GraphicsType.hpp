@@ -393,4 +393,19 @@ namespace kst::core {
     return flagA = flagA | flagB;
   }
 
+  /*
+   *  Types of Objects for debugging and labeling
+   */
+  enum class ObjectType : std::uint8_t {
+    BUFFER,
+    TEXTURE,
+    SHADER,
+    PIPELINE,
+    RENDER_PASS,
+    FRAMEBUFFER,
+    COMMAND_BUFFER,
+    DESCRIPTOR_SET,
+    SAMPLER,
+    QUERY
+  };
 } // namespace kst::core
