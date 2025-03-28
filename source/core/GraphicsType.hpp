@@ -458,4 +458,40 @@ namespace kst::core {
     uint32_t height{};
     uint32_t depth{};
   };
+  /*
+   *  Device Limits and capabilities.
+   */
+  struct Limits {
+    uint32_t maxImageDimension1D                   = 0;
+    uint32_t maxImageDimension2D                   = 0;
+    uint32_t maxImageDimension3D                   = 0;
+    uint32_t maxImageDimensionCube                 = 0;
+    uint32_t maxImageArrayLayers                   = 0;
+    uint32_t maxTexelBufferElements                = 0;
+    uint32_t maxUniformBufferRange                 = 0;
+    uint32_t maxStorageBufferRange                 = 0;
+    uint32_t maxPushConstantsSize                  = 0;
+    uint32_t maxMemoryAllocationCount              = 0;
+    uint32_t maxSamplerAllocationCount             = 0;
+    uint32_t maxBoundDescriptorSets                = 0;
+    uint32_t maxPerStageDescriptorSamplers         = 0;
+    uint32_t maxPerStageDescriptorUniformBuffers   = 0;
+    uint32_t maxPerStageDescriptorStorageBuffers   = 0;
+    uint32_t maxPerStageDescriptorSampledImages    = 0;
+    uint32_t maxPerStageDescriptorStorageImages    = 0;
+    uint32_t maxPerStageResources                  = 0;
+    uint32_t maxDescriptorSetSamplers              = 0;
+    uint32_t maxDescriptorSetUniformBuffers        = 0;
+    uint32_t maxDescriptorSetUniformBuffersDynamic = 0;
+    uint32_t maxDescriptorSetStorageBuffers        = 0;
+    uint32_t maxDescriptorSetStorageBuffersDynamic = 0;
+    uint32_t maxDescriptorSetSampledImages         = 0;
+    uint32_t maxDescriptorSetStorageImages         = 0;
+    uint32_t maxFramebufferWidth                   = 0;
+    uint32_t maxFramebufferHeight                  = 0;
+    uint32_t maxFramebufferLayers                  = 0;
+    uint32_t maxColorAttachments                   = 0;
+    float maxSamplerAnisotropy                     = 0.0F;
+  };
+
 } // namespace kst::core
