@@ -408,4 +408,54 @@ namespace kst::core {
     SAMPLER,
     QUERY
   };
+  /*
+   *  Viewport definition for rendering
+   */
+  struct Viewport {
+    double x{};
+    double y{};
+    double width{};
+    double height{};
+    double minDepth = 0.0;
+    double maxDepth = 1.0;
+  };
+
+  struct Scissor {
+    int32_t x{};
+    int32_t y{};
+    int32_t width{};
+    int32_t height{};
+  };
+
+  /*
+   *  Clear Values for render targets.
+   */
+  struct ClearValue {
+    struct ColorValue {
+      float r, g, b, a;
+    };
+
+    struct DepthStencil {
+      float despth;
+      uint8_t stencil;
+    };
+    union {
+      ColorValue color;
+      DepthStencil depthStencil;
+    };
+  };
+
+  /*
+   *  Defines a region of a texture.
+   */
+  struct TextureRegion {
+    uint32_t mipLevel   = 0;
+    uint32_t arrayLayer = 0;
+    uint32_t x{};
+    uint32_t y{};
+    uint32_t z{};
+    uint32_t width{};
+    uint32_t height{};
+    uint32_t depth{};
+  };
 } // namespace kst::core
