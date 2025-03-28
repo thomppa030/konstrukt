@@ -124,9 +124,9 @@ jobs:
           clang++-16 --version
           ninja --version
           
-          # Install dependencies with Conan (with verbose output for debugging)
-          # Use sudo to avoid permission issues
-          sudo conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=${{ matrix.build_type }} -v
+          # Install dependencies with Conan (using sudo -E to preserve environment)
+          # Use --build=missing to build any missing packages
+          conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=${{ matrix.build_type }} -v
           
           # List generated files in build directory and its subdirectories
           echo "Generated files in the build directory:"
@@ -140,9 +140,6 @@ jobs:
           fi
           
           echo "Found toolchain at: $TOOLCHAIN_PATH"
-          
-          # Make sure all files have appropriate permissions
-          sudo chown -R $USER:$USER .
           
           # Use the found toolchain file to configure CMake
           cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_PATH" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_COMPILER=clang++-16 -DCMAKE_C_COMPILER=clang-16 -DKST_BUILD_TESTS=ON
@@ -265,9 +262,8 @@ jobs:
           clang++-16 --version
           ninja --version
           
-          # Install dependencies with Conan (with verbose output for debugging)
-          # Use sudo to avoid permission issues
-          sudo conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=Debug -v
+          # Install dependencies with Conan
+          conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=Debug -v
           
           # List generated files in build directory and its subdirectories
           echo "Generated files in the build directory:"
@@ -281,9 +277,6 @@ jobs:
           fi
           
           echo "Found toolchain at: $TOOLCHAIN_PATH"
-          
-          # Make sure all files have appropriate permissions
-          sudo chown -R $USER:$USER .
           
           # Use the found toolchain file to configure CMake
           cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_PATH" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++-16 -DCMAKE_C_COMPILER=clang-16 -DKST_BUILD_TESTS=ON -DKST_BUILD_COVERAGE=ON
