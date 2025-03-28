@@ -6,7 +6,6 @@ target_include_directories(konstrukt_core PUBLIC
 
 target_sources(konstrukt_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/memory/Allocator.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/GraphicsType.hpp
 )
 
 # Add the new logger files

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../GraphicsType.hpp"
+#include <core/CoreTypes.hpp>
 
 namespace kst::core {
 
