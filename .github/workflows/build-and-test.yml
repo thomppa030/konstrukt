@@ -42,10 +42,9 @@ jobs:
       - name: Install Vulkan SDK
         if: runner.os == 'Linux'
         run: |
-          wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list https://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
-          sudo apt update
-          sudo apt install -y vulkan-sdk
+          # Install only the core Vulkan components without extra layers
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev vulkan-headers
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
