@@ -296,4 +296,23 @@ namespace kst::core {
     return stageA = stageA | stageB;
   }
 
+  /*
+   *  Cull modes for polygon culling
+   */
+  enum class CullMode : std::uint8_t {
+    NONE,          // Culling disabled
+    FRONT,         // Cull front-facing polygons
+    BACK,          // Cull back-facing polygons
+    FRONT_AND_BACK // Cull both front- and back-facing polygons
+  };
+
+  /*
+   *  Fill modes for rasterization
+   */
+  enum class FillMode : std::uint8_t {
+    SOLID,      // Fills polygons with a solid color
+    WIRFEFRAME, // Fills polygons with a wireframe
+    POINT       // Renders points at each vertex
+  };
+
 } // namespace kst::core
