@@ -188,4 +188,24 @@ namespace kst::core {
     CPU_AND_GPU, // Memory accessible by both CPU and GPU, typically slower
   };
 
+  /**
+   * Filtering Modes for texture sampling
+   */
+  enum class FilterMode : std::uint8_t {
+    NEAREST,    // Nearest-neighbor filtering
+    LINEAR,     // Linear filtering (smooth)
+    ANISOTROPIC // Anisotropic filtering (high quality)
+  };
+
+  /*
+   * Address Modes for texture coordinate wrapping
+   */
+  enum class AddressMode : std::uint8_t {
+    REPEAT,               // Repeat the texture
+    MIRRORED_REPEAT,      // Repeat the texture mirrored
+    CLAMP_TO_EDGE,        // Clamp texture coordinates to edge
+    CLAMP_TO_BORDER,      // Clamp texture coordinates to a specified border color
+    MIRROR_CLAMP_TO_EDGE, // Mirrors once, then clamps to edge
+  };
+
 } // namespace kst::core
