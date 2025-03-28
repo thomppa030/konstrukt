@@ -21,9 +21,10 @@ jobs:
     - name: Configure Conan
       run: |
         conan profile detect
-        conan config set general.revisions_enabled=1
-        conan config set general.parallel_download=8
-        conan config set general.parallel_build=8
+        conan config home
+        conan config install https://github.com/conan-io/conanclientcert.git
+        # Create a custom config file with the desired settings
+        echo '{"general": {"parallel_download": 8, "parallel_build": 8}}' > ~/.conan2/global.conf
 
     - name: Install dependencies
       run: |
