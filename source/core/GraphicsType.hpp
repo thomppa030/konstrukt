@@ -266,4 +266,34 @@ namespace kst::core {
     MAX               // Result = max(src color, dst color)
   };
 
+  /*
+   *  Shader stages in the graphics pipeline
+   */
+  enum class ShaderStage : std::uint8_t {
+    VERTEX                 = 1U << 0U, // Processes each incoming vertex
+    FRAGMENT               = 1U << 1U, // Processes each fragment/pixel
+    COMPUTE                = 1U << 2U, // General purpose GPU computation
+    GEOMETRY               = 1U << 3U, // Optional stage, that can generate/modify geometry
+    TESSELATION_CONTROL    = 1U << 4U, // Controls tessellation of patches
+    TESSELATION_EVALUATION = 1U << 5U, // Evaluates tessellated control points
+    MESH                   = 1U << 6U, // Creates Mesh geometry (for mesh shaders)
+    TASK                   = 1U << 7U  // Dispatches mesh shader workgroups
+  };
+
+  inline auto operator|(ShaderStage stageA, const ShaderStage stageB) -> ShaderStage {
+    return static_cast<ShaderStage>(
+        static_cast<std::uint8_t>(stageA) | static_cast<std::uint8_t>(stageB)
+    );
+  }
+
+  inline auto operator&(ShaderStage stageA, const ShaderStage stageB) -> ShaderStage {
+    return static_cast<ShaderStage>(
+        static_cast<std::uint8_t>(stageA) & static_cast<std::uint8_t>(stageB)
+    );
+  }
+
+  inline auto operator|=(ShaderStage& stageA, const ShaderStage& stageB) -> ShaderStage& {
+    return stageA = stageA | stageB;
+  }
+
 } // namespace kst::core
