@@ -315,4 +315,40 @@ namespace kst::core {
     POINT       // Renders points at each vertex
   };
 
+  /*
+   *  Logic operations for framebuffer blending
+   */
+  enum class LogicOp : std::uint8_t {
+    CLEAR,         // 0
+    AND,           // s & d
+    AND_REVERSE,   // s &~d
+    COPY,          // s
+    AND_INVERTED,  // ~s & d
+    NO_OP,         // d
+    XOR,           // s ^ d
+    OR,            // s | d
+    NOR,           // ~(s | d)
+    EQUIVALENT,    // ~(s ^ d)
+    INVERT,        // ~d
+    OR_REVERSE,    // s | ~d
+    COPY_INVERTED, // ~s
+    OR_INVERTED,   // ~s | d
+    NAND,          // ~(s & d)
+    SET            // 1
+  };
+
+  /*
+   *  Stencil operations for stencil testing
+   */
+  enum class StendilOp : std::uint8_t {
+    KEEP,                // Keep the current value
+    ZERO,                // Set to 0
+    REPLACE,             // Replace with reference value
+    INCREMENT_AND_CLAMP, // Increment and clamp
+    DECREMENT_AND_CLAMP, // Decrement and clamp
+    INVERT,              // Bitwise invert
+    INCREMENT_WRAP,      // Increment and wrap around
+    DECREMENT_WRAP       // Decrement and wrap around
+  };
+
 } // namespace kst::core
