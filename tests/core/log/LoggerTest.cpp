@@ -537,4 +537,171 @@ TEST(LoggerTest, LogEdgeCases) {
     
     // Verify log file exists
     EXPECT_TRUE(fs::exists("test_log_edge_cases.log"));
+}
+
+TEST(LoggerTest, ExceptionHandlingDuringInitialization) {
+    // First ensure logger is shut down
+    kst::core::Logger::shutdown();
+    
+    // Test with invalid path (a directory instead of a file)
+    // This should cause an exception in the underlying spdlog, which our logger should catch
+    fs::create_directory("invalid_log_dir");
+    
+    // Try to initialize with a directory path, which should fail but be caught
+    // The test passes if this doesn't crash
+    kst::core::Logger::init("invalid_log_dir");
+    
+    // Should not be initialized due to error
+    EXPECT_FALSE(fs::exists("invalid_log_dir/konstrukt.log"));
+    
+    // Clean up
+    fs::remove("invalid_log_dir");
+    
+    // Reinitialize with valid path for further tests
+    kst::core::Logger::init("test_exception_handling.log");
+    kst::core::Logger::info<>("Logger successfully reinitialized");
+    kst::core::Logger::shutdown();
+}
+
+TEST(LoggerTest, UninitializedLoggingAttempts) {
+    // Make sure logger is shut down
+    kst::core::Logger::shutdown();
+    
+    // Try to log without initialization - should be a no-op
+    kst::core::Logger::trace<>("This should not be logged");
+    kst::core::Logger::debug<>("This should not be logged");
+    kst::core::Logger::info<>("This should not be logged");
+    kst::core::Logger::warn<>("This should not be logged");
+    kst::core::Logger::error<>("This should not be logged");
+    kst::core::Logger::critical<>("This should not be logged");
+    
+    // Try non-template versions
+    kst::core::Logger::trace("This should not be logged");
+    kst::core::Logger::debug("This should not be logged");
+    kst::core::Logger::info("This should not be logged");
+    kst::core::Logger::warn("This should not be logged");
+    kst::core::Logger::error("This should not be logged");
+    kst::core::Logger::critical("This should not be logged");
+    
+    // Try app logging versions
+    kst::core::Logger::appTrace<>("This should not be logged");
+    kst::core::Logger::appDebug<>("This should not be logged");
+    kst::core::Logger::appInfo<>("This should not be logged");
+    kst::core::Logger::appWarn<>("This should not be logged");
+    kst::core::Logger::appError<>("This should not be logged");
+    kst::core::Logger::appCritical<>("This should not be logged");
+    kst::core::Logger::appLog<>(kst::core::LogLevel::INFO, "This should not be logged");
+    
+    // Test passes if we don't crash
+    EXPECT_TRUE(true);
+    
+    // Re-initialize logger for other tests
+    kst::core::Logger::init("test_uninitialized.log");
+    kst::core::Logger::info<>("Logger reinitialized");
+    kst::core::Logger::shutdown();
+}
+
+TEST(LoggerTest, LogLevelConversionEdgeCases) {
+    // Initialize logger
+    kst::core::Logger::init("test_log_level_edge.log");
+    
+    // Test default case handling in setLevel
+    // Create an invalid LogLevel value using a cast
+    kst::core::LogLevel invalidLevel = static_cast<kst::core::LogLevel>(99);
+    kst::core::Logger::setLevel(invalidLevel);
+    
+    // Should default to INFO
+    EXPECT_EQ(kst::core::Logger::getLevel(), kst::core::LogLevel::INFO);
+    
+    // Test logging with different log levels
+    kst::core::Logger::setLevel(kst::core::LogLevel::TRACE);
+    
+    // Log at each level
+    kst::core::Logger::trace<>("Trace message");
+    kst::core::Logger::debug<>("Debug message");
+    kst::core::Logger::info<>("Info message");
+    kst::core::Logger::warn<>("Warn message");
+    kst::core::Logger::error<>("Error message");
+    kst::core::Logger::critical<>("Critical message");
+    
+    // Set level to ERROR - only ERROR and CRITICAL should be logged
+    kst::core::Logger::setLevel(kst::core::LogLevel::ERROR);
+    kst::core::Logger::trace<>("This trace should not be logged");
+    kst::core::Logger::error<>("This error should be logged");
+    
+    // Try app logging as well
+    kst::core::Logger::appTrace<>("This app trace should not be logged");
+    kst::core::Logger::appError<>("This app error should be logged");
+    
+    // Also test generic appLog with different levels
+    kst::core::Logger::appLog<>(kst::core::LogLevel::TRACE, "This should not be logged");
+    kst::core::Logger::appLog<>(kst::core::LogLevel::ERROR, "This should be logged");
+    
+    // Test with an invalid level for appLog
+    kst::core::Logger::appLog<>(invalidLevel, "This should be treated as INFO");
+    
+    // Shutdown logger
+    kst::core::Logger::shutdown();
+    
+    // Verify log file exists
+    EXPECT_TRUE(fs::exists("test_log_level_edge.log"));
+}
+
+TEST(LoggerTest, CoreClientLoggerAccessors) {
+    // Initialize logger
+    kst::core::Logger::init("test_logger_accessors.log");
+    
+    // Test the core logger accessor
+    auto coreLogger = kst::core::Logger::getCoreLogger();
+    EXPECT_TRUE(coreLogger != nullptr);
+    EXPECT_EQ(coreLogger->name(), "KONSTRUKT");
+    
+    // Test the client logger accessor
+    auto clientLogger = kst::core::Logger::getClientLogger();
+    EXPECT_TRUE(clientLogger != nullptr);
+    EXPECT_EQ(clientLogger->name(), "APP");
+    
+    // Use the loggers directly
+    coreLogger->info("Direct core logger access");
+    clientLogger->info("Direct client logger access");
+    
+    // Shutdown logger
+    kst::core::Logger::shutdown();
+}
+
+TEST(LoggerTest, CompleteLevelCoverage) {
+    // Initialize logger
+    kst::core::Logger::init("test_complete_coverage.log");
+    
+    // Test all level conversions
+    
+    // Test DEBUG level conversion
+    kst::core::Logger::setLevel(kst::core::LogLevel::DEBUG);
+    EXPECT_EQ(kst::core::Logger::getLevel(), kst::core::LogLevel::DEBUG);
+    
+    // Test WARN level conversion
+    kst::core::Logger::setLevel(kst::core::LogLevel::WARN);
+    EXPECT_EQ(kst::core::Logger::getLevel(), kst::core::LogLevel::WARN);
+    
+    // Test the remaining level combinations 
+    // Make sure all logging methods work at each level
+    
+    // Test at DEBUG level
+    kst::core::Logger::setLevel(kst::core::LogLevel::DEBUG);
+    kst::core::Logger::trace<>("Trace message at DEBUG level");
+    kst::core::Logger::debug<>("Debug message at DEBUG level");
+    kst::core::Logger::appTrace<>("App trace message at DEBUG level");
+    kst::core::Logger::appDebug<>("App debug message at DEBUG level");
+    
+    // Test at WARN level
+    kst::core::Logger::setLevel(kst::core::LogLevel::WARN);
+    kst::core::Logger::trace<>("Trace message at WARN level");
+    kst::core::Logger::debug<>("Debug message at WARN level");
+    kst::core::Logger::warn<>("Warn message at WARN level");
+    kst::core::Logger::appTrace<>("App trace message at WARN level");
+    kst::core::Logger::appDebug<>("App debug message at WARN level");
+    kst::core::Logger::appWarn<>("App warn message at WARN level");
+    
+    // Shutdown logger
+    kst::core::Logger::shutdown();
 } 
