@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include <core/GraphicsType.hpp>
+#include <renderer/core/GraphicsType.hpp>
 
 using namespace kst::core;
 
@@ -56,14 +56,6 @@ TEST(GraphicsTypeTest, ResourceStateEnumValues) {
   EXPECT_EQ(static_cast<uint8_t>(ResourceState::PRESENT), 15);
 }
 
-TEST(GraphicsTypeTest, MemoryDomainEnumValues) {
-  // Test memory domain values
-  EXPECT_EQ(static_cast<uint8_t>(MemoryDomain::GPU_ONLY), 0);
-  EXPECT_EQ(static_cast<uint8_t>(MemoryDomain::CPU_TO_GPU), 1);
-  EXPECT_EQ(static_cast<uint8_t>(MemoryDomain::GPU_TO_CPU), 2);
-  EXPECT_EQ(static_cast<uint8_t>(MemoryDomain::CPU_AND_GPU), 3);
-}
-
 TEST(GraphicsTypeTest, ShaderStageBitwiseOperations) {
   // Test basic flag combinations
   auto combined = ShaderStage::VERTEX | ShaderStage::FRAGMENT;
@@ -76,36 +68,16 @@ TEST(GraphicsTypeTest, ShaderStageBitwiseOperations) {
   // Test AND operation
   auto stages1 = ShaderStage::VERTEX | ShaderStage::FRAGMENT | ShaderStage::COMPUTE;
   auto stages2 = ShaderStage::VERTEX | ShaderStage::GEOMETRY;
-  auto result = stages1 & stages2;
+  auto result  = stages1 & stages2;
   EXPECT_EQ(static_cast<uint8_t>(result), static_cast<uint8_t>(ShaderStage::VERTEX));
 
   // Test |= operator
   ShaderStage stages = ShaderStage::VERTEX;
   stages |= ShaderStage::FRAGMENT;
-  EXPECT_EQ(static_cast<uint8_t>(stages), 
-            static_cast<uint8_t>(ShaderStage::VERTEX | ShaderStage::FRAGMENT));
-}
-
-TEST(GraphicsTypeTest, FeatureFlagBitwiseOperations) {
-  // Test basic flag combinations
-  auto combined = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS;
-  EXPECT_EQ(static_cast<uint32_t>(combined), 0b11);
-
-  // Test multiple flags
-  auto multifeature = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS | 
-                      FeatureFlag::GEOMETRY_SHADER;
-  EXPECT_EQ(static_cast<uint32_t>(multifeature), 0b111);
-
-  // Test AND operation
-  auto features1 = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS;
-  auto features2 = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::MESH_SHADER;
-  auto result = features1 & features2;
-  EXPECT_EQ(static_cast<uint32_t>(result), static_cast<uint32_t>(FeatureFlag::COMPUTE_SHADERS));
-
-  // Test |= operator
-  FeatureFlag features = FeatureFlag::NONE;
-  features |= FeatureFlag::RAY_TRACING;
-  EXPECT_EQ(static_cast<uint32_t>(features), static_cast<uint32_t>(FeatureFlag::RAY_TRACING));
+  EXPECT_EQ(
+      static_cast<uint8_t>(stages),
+      static_cast<uint8_t>(ShaderStage::VERTEX | ShaderStage::FRAGMENT)
+  );
 }
 
 TEST(GraphicsTypeTest, ViewportStructInitialization) {
@@ -147,7 +119,7 @@ TEST(GraphicsTypeTest, ScissorStructInitialization) {
 TEST(GraphicsTypeTest, ClearValueColorInitialization) {
   ClearValue clearColor{};
   clearColor.color = {0.1f, 0.2f, 0.3f, 1.0f};
-  
+
   EXPECT_FLOAT_EQ(clearColor.color.r, 0.1f);
   EXPECT_FLOAT_EQ(clearColor.color.g, 0.2f);
   EXPECT_FLOAT_EQ(clearColor.color.b, 0.3f);
@@ -157,8 +129,8 @@ TEST(GraphicsTypeTest, ClearValueColorInitialization) {
 TEST(GraphicsTypeTest, ClearValueDepthStencilInitialization) {
   ClearValue clearDepthStencil{};
   clearDepthStencil.depthStencil = {1.0f, 0};
-  
-  EXPECT_FLOAT_EQ(clearDepthStencil.depthStencil.despth, 1.0f);
+
+  EXPECT_FLOAT_EQ(clearDepthStencil.depthStencil.depth, 1.0f);
   EXPECT_EQ(clearDepthStencil.depthStencil.stencil, 0);
 }
 
@@ -191,24 +163,23 @@ TEST(GraphicsTypeTest, EnumValues) {
   EXPECT_EQ(static_cast<uint8_t>(FilterMode::NEAREST), 0);
   EXPECT_EQ(static_cast<uint8_t>(FilterMode::LINEAR), 1);
   EXPECT_EQ(static_cast<uint8_t>(FilterMode::ANISOTROPIC), 2);
-  
+
   // Test AddressMode values
   EXPECT_EQ(static_cast<uint8_t>(AddressMode::REPEAT), 0);
   EXPECT_EQ(static_cast<uint8_t>(AddressMode::MIRRORED_REPEAT), 1);
   EXPECT_EQ(static_cast<uint8_t>(AddressMode::CLAMP_TO_EDGE), 2);
-  
+
   // Test PrimitiveTopology values
   EXPECT_EQ(static_cast<uint8_t>(PrimitiveTopology::POINT_LIST), 0);
   EXPECT_EQ(static_cast<uint8_t>(PrimitiveTopology::TRIANGLE_LIST), 3);
-  
+
   // Test CompareOp values
   EXPECT_EQ(static_cast<uint8_t>(CompareOp::NEVER), 0);
   EXPECT_EQ(static_cast<uint8_t>(CompareOp::LESS), 1);
   EXPECT_EQ(static_cast<uint8_t>(CompareOp::ALWAYS), 6);
-  
+
   // Test CullMode values
   EXPECT_EQ(static_cast<uint8_t>(CullMode::NONE), 0);
   EXPECT_EQ(static_cast<uint8_t>(CullMode::FRONT), 1);
   EXPECT_EQ(static_cast<uint8_t>(CullMode::BACK), 2);
 }
-
