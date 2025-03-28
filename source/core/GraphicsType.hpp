@@ -208,4 +208,30 @@ namespace kst::core {
     MIRROR_CLAMP_TO_EDGE, // Mirrors once, then clamps to edge
   };
 
+  /*
+   *  Primitivs topology types for rendering geometry in graphics pipelines
+   */
+  enum class PrimitiveTopology : std::uint8_t {
+    POINT_LIST,     // Renders points
+    LINE_LIST,      // Renders lines (pairs of vertices)
+    LINE_STRIP,     // Renders connected lines
+    TRIANGLE_LIST,  // Renders triangles (triplets of vertices)
+    TRIANGLE_STRIP, // Renders connected triangles
+    TRIANGLE_FAN,   // Renders triangles connected by a single vertex
+    PATCH_LIST      // Renders tessellated control points
+  };
+
+  /*
+   *  Compare operations for depth and stencil operations
+   */
+  enum class CompareOp : std::uint8_t {
+    NEVER,            // Never passes the test
+    LESS,             // Passes if new value < existing value
+    EQUAL,            // Passes if new value == existing value
+    LESS_OR_EQUAL,    // Passes if new value <= existing value
+    GREATER,          // Passes if new value > existing value
+    GREATER_OR_EQUAL, // Passes if new value >= existing value
+    ALWAYS,           // Always passes the test
+  };
+
 } // namespace kst::core
