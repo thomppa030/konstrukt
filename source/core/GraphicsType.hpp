@@ -234,4 +234,36 @@ namespace kst::core {
     ALWAYS,           // Always passes the test
   };
 
+  /**
+   * Blend factors for color blending operations
+   */
+  enum class BlendFactor : std::uint8_t {
+    ZERO,                     // factor is 0
+    ONE,                      // factor is 1
+    SRC_COLOR,                // factor is the source color
+    ONE_MINUS_SRC_COLOR,      // factor is 1 - source color
+    DST_COLOR,                // factor is the destination color
+    ONE_MINUS_DST_COLOR,      // factor is 1 - destination color
+    SRC_ALPHA,                // factor is the source alpha
+    ONE_MINUS_SRC_ALPHA,      // factor is 1 - source alpha
+    DST_ALPHA,                // factor is the destination SRC_ALPHA
+    ONE_MINUS_DST_ALPHA,      // factor is 1 - destination DST_ALPHA
+    CONSTANT_COLOR,           // factor is a constant color
+    ONE_MINUS_CONSTANT_COLOR, // factor is 1 - constant color
+    CONSTANT_ALPHA,           // factor is a constant alpha
+    ONE_MINUS_CONSTANT_ALPHA, // factor is 1 - constant alpha
+    SRC_ALPHA_SATURATE,       // factor is the min(src alpha, 1 - dst alpha)
+  };
+
+  /**
+   * Blend operations for color blending operations
+   */
+  enum class BlendOp : std::uint8_t {
+    ADD,              // Result = src color + dst color
+    SUBTRACT,         // Result = src color - dst color
+    REVERSE_SUBTRACT, // Result = dst color - src color
+    MIN,              // Result = min(src color, dst color)
+    MAX               // Result = max(src color, dst color)
+  };
+
 } // namespace kst::core
