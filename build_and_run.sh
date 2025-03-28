@@ -347,26 +347,59 @@ fi
 
 cd "$SCRIPT_DIR"
 
-print_status "Running CMake configuration with $COMPILER compiler in $BUILD_TYPE mode..."
-if [ "$GENERATE_COVERAGE" = true ]; then
-  print_status "Enabling coverage flags..."
-  cmake --preset=coverage
-  print_status "Building the project with $NUM_CORES cores..."
-  cmake --build --preset=coverage
-elif [ "$BUILD_TYPE" = "Debug" ]; then
-  cmake --preset=debug
-  print_status "Building the project with $NUM_CORES cores..."
-  cmake --build --preset=debug
-else
-  cmake --preset=release
-  print_status "Building the project with $NUM_CORES cores..."
-  cmake --build --preset=release
-fi
+# Function to relink compile_commands.json
+relink_compile_commands() {
+  print_status "Relinking compile_commands.json..."
+  
+  # Remove the old compile_commands.json if it exists
+  if [ -f "$SCRIPT_DIR/compile_commands.json" ]; then
+    rm "$SCRIPT_DIR/compile_commands.json"
+  fi
+  
+  # Create a symbolic link to the new compile_commands.json
+  local compile_commands_path=""
+  
+  # Check different possible locations for compile_commands.json
+  if [ -f "$BUILD_DIR/compile_commands.json" ]; then
+    compile_commands_path="$BUILD_DIR/compile_commands.json"
+  elif [ -f "$BUILD_DIR/Debug/compile_commands.json" ] && [ "$BUILD_TYPE" = "Debug" ]; then
+    compile_commands_path="$BUILD_DIR/Debug/compile_commands.json"
+  elif [ -f "$BUILD_DIR/Release/compile_commands.json" ] && [ "$BUILD_TYPE" = "Release" ]; then
+    compile_commands_path="$BUILD_DIR/Release/compile_commands.json"
+  elif [ -f "$BUILD_DIR/coverage/compile_commands.json" ] && [ "$GENERATE_COVERAGE" = true ]; then
+    compile_commands_path="$BUILD_DIR/coverage/compile_commands.json"
+  fi
+  
+  if [ -n "$compile_commands_path" ]; then
+    ln -sf "$compile_commands_path" "$SCRIPT_DIR/compile_commands.json"
+    print_status "Relinked compile_commands.json successfully from $compile_commands_path"
+  else
+    print_warning "compile_commands.json not found in any build directory."
+    # Perform a find to locate it
+    local found_path=$(find "$BUILD_DIR" -name "compile_commands.json" -type f | head -n 1)
+    if [ -n "$found_path" ]; then
+      ln -sf "$found_path" "$SCRIPT_DIR/compile_commands.json"
+      print_status "Found and relinked compile_commands.json from $found_path"
+    fi
+  fi
+}
 
-# Create a symlink to compile_commands.json in the project root for tools like clangd 
-if [ -f "$BUILD_DIR/$BUILD_TYPE/compile_commands.json" ] && [ ! -f "$SCRIPT_DIR/compile_commands.json" ]; then
-    print_status "Creating symlink to compile_commands.json in project root for IDE integration"
-    ln -sf "$BUILD_DIR/$BUILD_TYPE/compile_commands.json" "$SCRIPT_DIR/compile_commands.json"
+# Run CMake based on the selected preset
+if [ "$GENERATE_COVERAGE" = true ]; then
+  print_status "Running CMake configuration with coverage enabled..."
+  cmake --preset=coverage
+  cmake --build --preset=coverage
+  relink_compile_commands
+elif [ "$BUILD_TYPE" = "Debug" ]; then
+  print_status "Running CMake configuration in Debug mode..."
+  cmake --preset=debug
+  cmake --build --preset=debug
+  relink_compile_commands
+else
+  print_status "Running CMake configuration in Release mode..."
+  cmake --preset=release
+  cmake --build --preset=release
+  relink_compile_commands
 fi
 
 EXECUTABLE="$BUILD_DIR/${EXEC_NAME}"
