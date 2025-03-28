@@ -13,8 +13,11 @@ CLEAN_BUILD=false
 USE_LIBCPP=false
 NUM_CORES=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 2)
 VERBOSE=false
+RUN_BINARY=true
+RUN_TESTS=false
+GENERATE_COVERAGE=false
 
-while [[$# -gt 0]]; do
+while [ $# -gt 0 ]; do
   case $1 in
     --debug)
       BUILD_TYPE="Debug"
@@ -67,6 +70,38 @@ while [[$# -gt 0]]; do
     --cores=*)
       COMPILER="${1#*=}"
       shift
+      ;;
+    -d|--debug)
+      BUILD_TYPE="Debug"
+      shift
+      ;;
+    -r|--release)
+      BUILD_TYPE="Release"
+      shift
+      ;;
+    -c|--coverage)
+      BUILD_TYPE="Debug"
+      GENERATE_COVERAGE=true
+      shift
+      ;;
+    --no-run)
+      RUN_BINARY=false
+      shift
+      ;;
+    -t|--test)
+      RUN_TESTS=true
+      shift
+      ;;
+    -h|--help)
+      echo "Usage: $0 [options]"
+      echo "Options:"
+      echo "  -d, --debug     Build in debug mode"
+      echo "  -r, --release   Build in release mode (default)"
+      echo "  -c, --coverage  Build with coverage reporting"
+      echo "  --no-run        Don't run the binary after building"
+      echo "  -t, --test      Run tests"
+      echo "  -h, --help      Show this help message"
+      exit 0
       ;;
     *)
       ARGS="$ARGS $1"
@@ -313,14 +348,19 @@ fi
 cd "$SCRIPT_DIR"
 
 print_status "Running CMake configuration with $COMPILER compiler in $BUILD_TYPE mode..."
-if [ "$BUILD_TYPE" = "Debug" ]; then
-  cmake --preset=ninja-debug
-print_status "Building the project with $NUM_CORES cores..."
-  cmake --build --preset debug
+if [ "$GENERATE_COVERAGE" = true ]; then
+  print_status "Enabling coverage flags..."
+  cmake --preset=coverage
+  print_status "Building the project with $NUM_CORES cores..."
+  cmake --build --preset=coverage
+elif [ "$BUILD_TYPE" = "Debug" ]; then
+  cmake --preset=debug
+  print_status "Building the project with $NUM_CORES cores..."
+  cmake --build --preset=debug
 else
-  cmake --preset=ninja-release
-print_status "Building the project with $NUM_CORES cores..."
-  cmake --build --preset release
+  cmake --preset=release
+  print_status "Building the project with $NUM_CORES cores..."
+  cmake --build --preset=release
 fi
 
 # Create a symlink to compile_commands.json in the project root for tools like clangd 
@@ -342,20 +382,99 @@ if [ ! -f "$EXECUTABLE" ]; then
     fi
 fi
 
-if [ -n "$EXECUTABLE" ] && [ -f "$EXECUTABLE" ] && [ -x "$EXECUTABLE" ]; then
-    print_status "Build successful! Running the application..."
+print_status "Build successful!"
+
+# Handle tests and coverage together
+if [ "$RUN_TESTS" = true ] || [ "$GENERATE_COVERAGE" = true ]; then
+  # Determine the build directory
+  if [ "$GENERATE_COVERAGE" = true ]; then
+    TEST_DIR="$BUILD_DIR/coverage"
+  elif [ "$BUILD_TYPE" = "Debug" ]; then
+    TEST_DIR="$BUILD_DIR/debug"
+  else
+    TEST_DIR="$BUILD_DIR/release"
+  fi
+  
+  # Find the test executable
+  TEST_EXEC=$(find "$TEST_DIR" -name "konstrukt_tests" -type f -executable)
+  if [ -n "$TEST_EXEC" ]; then
+    echo "Found test executable at $TEST_EXEC"
+    
+    # Set up coverage if needed
+    if [ "$GENERATE_COVERAGE" = true ]; then
+      echo "Generating coverage reports..."
+      cd "$TEST_DIR"
+      
+      # Run tests with coverage instrumentation
+      echo "Running tests with coverage instrumentation..."
+      LLVM_PROFILE_FILE="$(pwd)/default.profraw" "$TEST_EXEC"
+      
+      # Check if profile file was generated
+      if [ ! -f default.profraw ]; then
+          echo "Error: Coverage data was not generated. Check if tests are properly instrumented."
+          exit 1
+      fi
+      
+      # Generate coverage data
+      llvm-profdata merge -sparse default.profraw -o default.profdata
+      
+      # Check if profile data was generated
+      if [ ! -f default.profdata ]; then
+          echo "Error: Failed to merge coverage data."
+          exit 1
+      fi
+      
+      # Create coverage report directory
+      mkdir -p coverage_report
+      
+      # Generate HTML report - exclude test files
+      llvm-cov show "$TEST_EXEC" -instr-profile=default.profdata \
+               -ignore-filename-regex=".*tests/.*" \
+               --format=html > coverage_report/index.html
+      
+      # Export coverage data in a format Codecov can understand - exclude test files
+      llvm-cov export "$TEST_EXEC" -instr-profile=default.profdata \
+               -ignore-filename-regex=".*tests/.*" \
+               -format=lcov > coverage.lcov
+      
+      # Print coverage summary - exclude test files
+      llvm-cov report "$TEST_EXEC" -instr-profile=default.profdata \
+               -ignore-filename-regex=".*tests/.*"
+      
+      echo "Coverage report generated in $TEST_DIR/coverage_report/index.html"
+      echo "Coverage data for Codecov generated in $TEST_DIR/coverage.lcov"
+      
+      # Return to the original directory
+      cd "$SCRIPT_DIR"
+    else
+      # Just run the tests without coverage
+      echo "Running tests..."
+      "$TEST_EXEC"
+    fi
+  else
+    echo "Error: Could not find test executable."
+    echo "Searched in $TEST_DIR"
+    exit 1
+  fi
+fi
+
+# Only run the application if we're not running tests or generating coverage
+if [ "$RUN_TESTS" = false ] && [ "$GENERATE_COVERAGE" = false ]; then
+  if [ -n "$EXECUTABLE" ] && [ -f "$EXECUTABLE" ] && [ -x "$EXECUTABLE" ]; then
+    print_status "Running the application..."
     echo -e "\033[1;36m------------------------[Application Output]------------------------\033[0m"
     "$EXECUTABLE" $ARGS
     EXIT_CODE=$?
     echo -e "\033[1;36m--------------------------------------------------------------------\033[0m"
     
     if [ $EXIT_CODE -ne 0 ]; then
-        print_error "Application exited with code $EXIT_CODE"
-        exit $EXIT_CODE
+      print_error "Application exited with code $EXIT_CODE"
+      exit $EXIT_CODE
     fi
-else
+  else
     print_error "Executable not found or not executable."
     print_error "Looked for: $EXECUTABLE"
     print_error "Check your CMakeLists.txt to ensure the target name is '${EXEC_NAME}'"
     exit 1
+  fi
 fi
