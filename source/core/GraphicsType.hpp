@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <limits>
 
 namespace kst::core {
 
@@ -408,6 +410,7 @@ namespace kst::core {
     SAMPLER,
     QUERY
   };
+
   /*
    *  Viewport definition for rendering
    */
@@ -458,6 +461,7 @@ namespace kst::core {
     uint32_t height{};
     uint32_t depth{};
   };
+
   /*
    *  Device Limits and capabilities.
    */
@@ -492,6 +496,33 @@ namespace kst::core {
     uint32_t maxFramebufferLayers                  = 0;
     uint32_t maxColorAttachments                   = 0;
     float maxSamplerAnisotropy                     = 0.0F;
+  };
+
+  namespace memory {
+    constexpr uint32_t MAX_MEMORY_HEAPS = 16;
+    constexpr uint32_t MAX_MEMORY_TYPES = 32;
+  } // namespace memory
+
+  /*
+   *  Memory properties of the device.
+   */
+  struct MemoryProperties {
+    uint32_t memoryHeapCount{};
+    struct MemoryHeap {
+      uint64_t size;
+      bool isDeviceLocal;
+    };
+    std::array<MemoryHeap, memory::MAX_MEMORY_HEAPS> memoryHeaps{};
+
+    uint32_t memoryTypeCount{};
+    struct MemoryType {
+      uint32_t heapIndex;
+      bool isDeviceLocal;
+      bool isHostVisible;
+      bool isHostCoherent;
+      bool isHostCached;
+    };
+    std::array<MemoryType, memory::MAX_MEMORY_TYPES> memoryTypes{};
   };
 
 } // namespace kst::core
