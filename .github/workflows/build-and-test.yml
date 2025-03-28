@@ -330,6 +330,7 @@ jobs:
 
   static-analysis:
     name: Static Analysis
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
