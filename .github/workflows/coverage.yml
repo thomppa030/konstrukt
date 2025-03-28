@@ -1,0 +1,34 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake clang llvm libvulkan-dev libglm-dev libglfw3-dev libfmt-dev
+        
+    - name: Install GTest and GMock
+      run: sudo apt-get install -y libgtest-dev libgmock-dev
+      
+    - name: Build and run tests with coverage
+      run: |
+        chmod +x ./coverage.sh
+        ./coverage.sh
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./build/coverage.lcov
+        fail_ci_if_error: true
+        verbose: true 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(
   konstrukt
@@ -18,12 +18,23 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS_DIRECTORY "${CMAKE_SOURCE_DIR}")
 option(KST_BUILD_TESTS "Build with Tests" OFF)
 option(KST_USE_VULKAN "Build with Vulkan Support" ON)
 option(KST_BUILD_RUNTIME "Build executable" ON)
+option(KST_BUILD_COVERAGE "Build with coverage reporting" OFF)
 ######### Options End ######
 
 if(MSVC)
   add_compile_options(/W4 /WX)
 else()
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
+if(KST_BUILD_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+    add_link_options(-fprofile-instr-generate)
+  else()
+    add_compile_options(-g --coverage)
+    add_link_options(--coverage)
+  endif()
 endif()
 
 find_package(Vulkan REQUIRED)
@@ -45,10 +56,10 @@ if(KST_BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-
 message(STATUS "Konstrukt Configuration:")
 message(STATUS "  Vulkan support: ${KST_USE_VULKAN}")
 message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Build Tests: ${KST_BUILD_TESTS}")
+message(STATUS "  Build Coverage: ${KST_BUILD_COVERAGE}")
 message(STATUS "  Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
