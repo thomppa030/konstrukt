@@ -27,14 +27,43 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> m_StartTime;
 };
 
-TEST(LoggerTest, InitializationAndShutdown) {
-    // Clean up any existing log files
-    if (fs::exists("test.log")) {
-        fs::remove("test.log");
+// Test fixture for Logger tests that handles setting up and tearing down a test directory
+class LoggerTestFixture : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Create test directory
+        testLogsDir = "test_logs";
+        if (fs::exists(testLogsDir)) {
+            fs::remove_all(testLogsDir);
+        }
+        fs::create_directory(testLogsDir);
+        
+        // Make sure logger is shut down before each test
+        kst::core::Logger::shutdown();
     }
     
+    void TearDown() override {
+        // Ensure logger is shut down
+        kst::core::Logger::shutdown();
+        
+        // Optional: remove test logs directory when tests are done
+        // Comment this out if you want to inspect the logs after testing
+        fs::remove_all(testLogsDir);
+    }
+    
+    std::string getLogPath(const std::string& filename) {
+        return testLogsDir + "/" + filename;
+    }
+    
+    std::string testLogsDir;
+};
+
+TEST_F(LoggerTestFixture, InitializationAndShutdown) {
+    // Get log path
+    std::string logPath = getLogPath("test.log");
+    
     // Initialize logger with test file
-    kst::core::Logger::init("test.log");
+    kst::core::Logger::init(logPath);
     
     // Test logging at different levels
     kst::core::Logger::trace<>("This is a trace message");
@@ -47,10 +76,10 @@ TEST(LoggerTest, InitializationAndShutdown) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test.log"));
+    EXPECT_TRUE(fs::exists(logPath));
     
     // Read log file content
-    std::ifstream logFile("test.log");
+    std::ifstream logFile(logPath);
     std::string content((std::istreambuf_iterator<char>(logFile)),
                          std::istreambuf_iterator<char>());
     
@@ -62,9 +91,10 @@ TEST(LoggerTest, InitializationAndShutdown) {
     EXPECT_TRUE(content.find("This is an error message") != std::string::npos);
 }
 
-TEST(LoggerTest, LevelControl) {
+TEST_F(LoggerTestFixture, LevelControl) {
     // Initialize logger
-    kst::core::Logger::init("test_level.log");
+    std::string logPath = getLogPath("test_level.log");
+    kst::core::Logger::init(logPath);
     
     // Test default level
     EXPECT_EQ(kst::core::Logger::getLevel(), kst::core::LogLevel::TRACE);
@@ -89,14 +119,12 @@ TEST(LoggerTest, LevelControl) {
     kst::core::Logger::shutdown();
 }
 
-TEST(LoggerTest, FormatAndContext) {
-    // Clean up any existing log files
-    if (fs::exists("test_format.log")) {
-        fs::remove("test_format.log");
-    }
+TEST_F(LoggerTestFixture, FormatAndContext) {
+    // Get log path
+    std::string logPath = getLogPath("test_format.log");
     
     // Initialize logger with test file
-    kst::core::Logger::init("test_format.log");
+    kst::core::Logger::init(logPath);
     
     // Test logging with format arguments
     int value = 42;
@@ -120,23 +148,22 @@ TEST(LoggerTest, FormatAndContext) {
     
     // We can't verify file content reliably in this test environment
     // So let's just make sure the file exists
-    EXPECT_TRUE(fs::exists("test_format.log"));
+    EXPECT_TRUE(fs::exists(logPath));
     
     // Log message verification is done visually in the console output
     // since we can see the values 42 and 3.14 were correctly formatted in the console log
 }
 
-TEST(LoggerTest, DoubleInitialization) {
-    // Clean up any existing log files
-    if (fs::exists("test_double_init.log")) {
-        fs::remove("test_double_init.log");
-    }
+TEST_F(LoggerTestFixture, DoubleInitialization) {
+    // Get log paths
+    std::string logPath1 = getLogPath("test_double_init.log");
+    std::string logPath2 = getLogPath("test_double_init_2.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_double_init.log");
+    kst::core::Logger::init(logPath1);
     
     // Try to initialize again - should be a no-op
-    kst::core::Logger::init("test_double_init_2.log");
+    kst::core::Logger::init(logPath2);
     
     // Log a message
     kst::core::Logger::info<>("This message should go to the first log file");
@@ -148,15 +175,16 @@ TEST(LoggerTest, DoubleInitialization) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Verify first log file exists
-    EXPECT_TRUE(fs::exists("test_double_init.log"));
+    EXPECT_TRUE(fs::exists(logPath1));
     
     // Second log file should not exist
-    EXPECT_FALSE(fs::exists("test_double_init_2.log"));
+    EXPECT_FALSE(fs::exists(logPath2));
 }
 
-TEST(LoggerTest, DoubleShutdown) {
+TEST_F(LoggerTestFixture, DoubleShutdown) {
     // Initialize logger
-    kst::core::Logger::init("test_double_shutdown.log");
+    std::string logPath = getLogPath("test_double_shutdown.log");
+    kst::core::Logger::init(logPath);
     
     // Log a message
     kst::core::Logger::info<>("This is a test message");
@@ -174,14 +202,12 @@ TEST(LoggerTest, DoubleShutdown) {
     EXPECT_TRUE(true);
 }
 
-TEST(LoggerTest, CriticalLogs) {
-    // Clean up any existing log files
-    if (fs::exists("test_critical.log")) {
-        fs::remove("test_critical.log");
-    }
+TEST_F(LoggerTestFixture, CriticalLogs) {
+    // Get log path
+    std::string logPath = getLogPath("test_critical.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_critical.log");
+    kst::core::Logger::init(logPath);
     
     // Log critical messages
     kst::core::Logger::critical<>("This is a critical message");
@@ -191,10 +217,10 @@ TEST(LoggerTest, CriticalLogs) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_critical.log"));
+    EXPECT_TRUE(fs::exists(logPath));
     
     // Read log file content
-    std::ifstream logFile("test_critical.log");
+    std::ifstream logFile(logPath);
     std::string content((std::istreambuf_iterator<char>(logFile)),
                          std::istreambuf_iterator<char>());
     
@@ -203,14 +229,12 @@ TEST(LoggerTest, CriticalLogs) {
     EXPECT_TRUE(content.find("Critical error in component Auth with code 500") != std::string::npos);
 }
 
-TEST(LoggerTest, ClientAppLogging) {
-    // Clean up any existing log files
-    if (fs::exists("test_client.log")) {
-        fs::remove("test_client.log");
-    }
+TEST_F(LoggerTestFixture, ClientAppLogging) {
+    // Get log path
+    std::string logPath = getLogPath("test_client.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_client.log");
+    kst::core::Logger::init(logPath);
     
     // Test client app logging
     kst::core::Logger::appTrace<>("Client trace message");
@@ -230,17 +254,15 @@ TEST(LoggerTest, ClientAppLogging) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_client.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
-TEST(LoggerTest, LoggingWithDifferentLevels) {
-    // Clean up any existing log files
-    if (fs::exists("test_levels.log")) {
-        fs::remove("test_levels.log");
-    }
+TEST_F(LoggerTestFixture, LoggingWithDifferentLevels) {
+    // Get log path
+    std::string logPath = getLogPath("test_levels.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_levels.log");
+    kst::core::Logger::init(logPath);
     
     // Set level to ERROR
     kst::core::Logger::setLevel(kst::core::LogLevel::ERROR);
@@ -262,10 +284,10 @@ TEST(LoggerTest, LoggingWithDifferentLevels) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_levels.log"));
+    EXPECT_TRUE(fs::exists(logPath));
     
     // Read log file content
-    std::ifstream logFile("test_levels.log");
+    std::ifstream logFile(logPath);
     std::string content((std::istreambuf_iterator<char>(logFile)),
                          std::istreambuf_iterator<char>());
     
@@ -280,9 +302,12 @@ TEST(LoggerTest, LoggingWithDifferentLevels) {
     EXPECT_TRUE(content.find("This critical message should appear") != std::string::npos);
 }
 
-TEST(LoggerTest, GetRawLoggers) {
+TEST_F(LoggerTestFixture, GetRawLoggers) {
+    // Get log path
+    std::string logPath = getLogPath("test_raw.log");
+    
     // Initialize logger
-    kst::core::Logger::init("test_raw.log");
+    kst::core::Logger::init(logPath);
     
     // Get the raw loggers
     auto coreLogger = kst::core::Logger::getCoreLogger();
@@ -303,19 +328,17 @@ TEST(LoggerTest, GetRawLoggers) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_raw.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
 // New test cases for improved coverage
 
-TEST(LoggerTest, NonTemplateLogMethods) {
-    // Clean up any existing log files
-    if (fs::exists("test_non_template.log")) {
-        fs::remove("test_non_template.log");
-    }
+TEST_F(LoggerTestFixture, NonTemplateLogMethods) {
+    // Get log path
+    std::string logPath = getLogPath("test_non_template.log");
     
     // Create a logger instance for testing non-static methods
-    kst::core::Logger::init("test_non_template.log");
+    kst::core::Logger::init(logPath);
     
     // Create a logger instance
     kst::core::Logger logger;
@@ -332,18 +355,16 @@ TEST(LoggerTest, NonTemplateLogMethods) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_non_template.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
-TEST(LoggerTest, InitializationWithCustomSettings) {
-    // Clean up any existing log files
-    if (fs::exists("test_custom_init.log")) {
-        fs::remove("test_custom_init.log");
-    }
+TEST_F(LoggerTestFixture, InitializationWithCustomSettings) {
+    // Get log path
+    std::string logPath = getLogPath("test_custom_init.log");
     
     // Initialize logger with custom settings
     // Small max file size (1KB) and 2 max files to test rotation
-    kst::core::Logger::init("test_custom_init.log", 1024, 2);
+    kst::core::Logger::init(logPath, 1024, 2);
     
     // Write enough log messages to trigger rotation
     for (int i = 0; i < 50; ++i) {
@@ -354,20 +375,18 @@ TEST(LoggerTest, InitializationWithCustomSettings) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_custom_init.log"));
+    EXPECT_TRUE(fs::exists(logPath));
     
     // The rotated file might exist depending on message sizes
     // but we can't guarantee it, so we won't check for it
 }
 
-TEST(LoggerTest, LoggingAfterShutdown) {
-    // Clean up any existing log files
-    if (fs::exists("test_log_after_shutdown.log")) {
-        fs::remove("test_log_after_shutdown.log");
-    }
+TEST_F(LoggerTestFixture, LoggingAfterShutdown) {
+    // Get log path
+    std::string logPath = getLogPath("test_log_after_shutdown.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_log_after_shutdown.log");
+    kst::core::Logger::init(logPath);
     
     // Log a message
     kst::core::Logger::info<>("Message before shutdown");
@@ -387,17 +406,15 @@ TEST(LoggerTest, LoggingAfterShutdown) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_log_after_shutdown.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
-TEST(LoggerTest, LogLevelDefaultCase) {
-    // Clean up any existing log files
-    if (fs::exists("test_default_level.log")) {
-        fs::remove("test_default_level.log");
-    }
+TEST_F(LoggerTestFixture, LogLevelDefaultCase) {
+    // Get log path
+    std::string logPath = getLogPath("test_default_level.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_default_level.log");
+    kst::core::Logger::init(logPath);
     
     // Test all standard log levels
     kst::core::Logger::setLevel(kst::core::LogLevel::TRACE);
@@ -421,12 +438,12 @@ TEST(LoggerTest, LogLevelDefaultCase) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_default_level.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
 // Additional test cases for Logger.hpp coverage
 
-TEST(LoggerTest, LogContextConstruction) {
+TEST_F(LoggerTestFixture, LogContextConstruction) {
     // Test default constructor
     kst::core::LogContext emptyContext;
     EXPECT_EQ(emptyContext.file, "");
@@ -447,14 +464,12 @@ TEST(LoggerTest, LogContextConstruction) {
     EXPECT_EQ(locationContext.line, location.line());
 }
 
-TEST(LoggerTest, AllAppLoggingMethods) {
-    // Clean up any existing log files
-    if (fs::exists("test_all_app_logging.log")) {
-        fs::remove("test_all_app_logging.log");
-    }
+TEST_F(LoggerTestFixture, AllAppLoggingMethods) {
+    // Get log path
+    std::string logPath = getLogPath("test_all_app_logging.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_all_app_logging.log");
+    kst::core::Logger::init(logPath);
     
     // Test all app logging methods with different parameter types
     
@@ -492,18 +507,16 @@ TEST(LoggerTest, AllAppLoggingMethods) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_all_app_logging.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
 // Test to cover edge cases for log and appLog methods
-TEST(LoggerTest, LogEdgeCases) {
-    // Clean up any existing log files
-    if (fs::exists("test_log_edge_cases.log")) {
-        fs::remove("test_log_edge_cases.log");
-    }
+TEST_F(LoggerTestFixture, LogEdgeCases) {
+    // Get log path
+    std::string logPath = getLogPath("test_log_edge_cases.log");
     
     // Initialize logger
-    kst::core::Logger::init("test_log_edge_cases.log");
+    kst::core::Logger::init(logPath);
     
     // Test empty format string
     kst::core::Logger::info<>("");
@@ -536,34 +549,33 @@ TEST(LoggerTest, LogEdgeCases) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_log_edge_cases.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
-TEST(LoggerTest, ExceptionHandlingDuringInitialization) {
+TEST_F(LoggerTestFixture, ExceptionHandlingDuringInitialization) {
     // First ensure logger is shut down
     kst::core::Logger::shutdown();
     
     // Test with invalid path (a directory instead of a file)
     // This should cause an exception in the underlying spdlog, which our logger should catch
-    fs::create_directory("invalid_log_dir");
+    std::string invalidDir = getLogPath("invalid_log_dir");
+    fs::create_directory(invalidDir);
     
     // Try to initialize with a directory path, which should fail but be caught
     // The test passes if this doesn't crash
-    kst::core::Logger::init("invalid_log_dir");
+    kst::core::Logger::init(invalidDir);
     
     // Should not be initialized due to error
-    EXPECT_FALSE(fs::exists("invalid_log_dir/konstrukt.log"));
-    
-    // Clean up
-    fs::remove("invalid_log_dir");
+    EXPECT_FALSE(fs::exists(invalidDir + "/konstrukt.log"));
     
     // Reinitialize with valid path for further tests
-    kst::core::Logger::init("test_exception_handling.log");
+    std::string logPath = getLogPath("test_exception_handling.log");
+    kst::core::Logger::init(logPath);
     kst::core::Logger::info<>("Logger successfully reinitialized");
     kst::core::Logger::shutdown();
 }
 
-TEST(LoggerTest, UninitializedLoggingAttempts) {
+TEST_F(LoggerTestFixture, UninitializedLoggingAttempts) {
     // Make sure logger is shut down
     kst::core::Logger::shutdown();
     
@@ -596,14 +608,18 @@ TEST(LoggerTest, UninitializedLoggingAttempts) {
     EXPECT_TRUE(true);
     
     // Re-initialize logger for other tests
-    kst::core::Logger::init("test_uninitialized.log");
+    std::string logPath = getLogPath("test_uninitialized.log");
+    kst::core::Logger::init(logPath);
     kst::core::Logger::info<>("Logger reinitialized");
     kst::core::Logger::shutdown();
 }
 
-TEST(LoggerTest, LogLevelConversionEdgeCases) {
+TEST_F(LoggerTestFixture, LogLevelConversionEdgeCases) {
+    // Get log path
+    std::string logPath = getLogPath("test_log_level_edge.log");
+    
     // Initialize logger
-    kst::core::Logger::init("test_log_level_edge.log");
+    kst::core::Logger::init(logPath);
     
     // Test default case handling in setLevel
     // Create an invalid LogLevel value using a cast
@@ -644,12 +660,15 @@ TEST(LoggerTest, LogLevelConversionEdgeCases) {
     kst::core::Logger::shutdown();
     
     // Verify log file exists
-    EXPECT_TRUE(fs::exists("test_log_level_edge.log"));
+    EXPECT_TRUE(fs::exists(logPath));
 }
 
-TEST(LoggerTest, CoreClientLoggerAccessors) {
+TEST_F(LoggerTestFixture, CoreClientLoggerAccessors) {
+    // Get log path
+    std::string logPath = getLogPath("test_logger_accessors.log");
+    
     // Initialize logger
-    kst::core::Logger::init("test_logger_accessors.log");
+    kst::core::Logger::init(logPath);
     
     // Test the core logger accessor
     auto coreLogger = kst::core::Logger::getCoreLogger();
@@ -669,9 +688,12 @@ TEST(LoggerTest, CoreClientLoggerAccessors) {
     kst::core::Logger::shutdown();
 }
 
-TEST(LoggerTest, CompleteLevelCoverage) {
+TEST_F(LoggerTestFixture, CompleteLevelCoverage) {
+    // Get log path
+    std::string logPath = getLogPath("test_complete_coverage.log");
+    
     // Initialize logger
-    kst::core::Logger::init("test_complete_coverage.log");
+    kst::core::Logger::init(logPath);
     
     // Test all level conversions
     
