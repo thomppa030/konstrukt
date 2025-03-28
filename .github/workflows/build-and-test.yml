@@ -49,15 +49,10 @@ jobs:
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          # Add LLVM 16 repository for newer Clang with better C++20 support
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
-          sudo apt-get update
-          
           # Install essential build tools and CMake first
+          sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build pkg-config
-          # Install newer Clang with better C++20 support
+          # Install Clang compiler
           sudo apt-get install -y clang-16 clang-tools-16 clang-tidy-16
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
@@ -66,6 +61,10 @@ jobs:
           sudo apt-get install -y libc++-16-dev libc++abi-16-dev
           # Install spdlog and other dependencies
           sudo apt-get install -y libspdlog-dev libfmt-dev
+          # Install OpenGL dependencies
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+          # Install Vulkan dependencies
+          sudo apt-get install -y libvulkan-dev
           # Install X11 development libraries needed for GLFW
           sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev \
           libx11-dev libx11-xcb-dev libfontenc-dev libice-dev libsm-dev libxau-dev libxaw7-dev \
@@ -112,6 +111,7 @@ jobs:
           tools.build:compiler_executables={"c": "clang-16", "cpp": "clang++-16"}
           tools.cmake.cmaketoolchain:generator=Ninja
           tools.system.package_manager:mode=install
+          tools.system.package_manager:sudo=True
           EOF
           
           # Display profiles for debugging
@@ -124,11 +124,9 @@ jobs:
           clang++-16 --version
           ninja --version
           
-          # Install spdlog and other missing dependencies directly
-          sudo apt-get install -y libspdlog-dev
-          
           # Install dependencies with Conan (with verbose output for debugging)
-          conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=${{ matrix.build_type }} -v
+          # Use sudo to avoid permission issues
+          sudo conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=${{ matrix.build_type }} -v
           
           # List generated files in build directory and its subdirectories
           echo "Generated files in the build directory:"
@@ -142,6 +140,9 @@ jobs:
           fi
           
           echo "Found toolchain at: $TOOLCHAIN_PATH"
+          
+          # Make sure all files have appropriate permissions
+          sudo chown -R $USER:$USER .
           
           # Use the found toolchain file to configure CMake
           cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_PATH" -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_CXX_COMPILER=clang++-16 -DCMAKE_C_COMPILER=clang-16 -DKST_BUILD_TESTS=ON
@@ -188,14 +189,10 @@ jobs:
           # Create default Conan profile to avoid the common error in CI environments
           conan profile detect --force
           
-          # Add LLVM 16 repository for newer Clang with better C++20 support
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main"
-          sudo apt-get update
-          
           # Install essential build tools and dependencies for coverage job
+          sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build pkg-config
-          # Install newer Clang with better C++20 support
+          # Install Clang compiler (avoid adding external repositories)
           sudo apt-get install -y clang-16 clang-tools-16 clang-tidy-16
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
@@ -203,8 +200,10 @@ jobs:
           # Install C++ compiler toolchain
           sudo apt-get install -y libc++-16-dev libc++abi-16-dev
           
-          # Install spdlog and other system dependencies
-          sudo apt-get install -y libspdlog-dev
+          # Install spdlog and OpenGL dependencies
+          sudo apt-get install -y libspdlog-dev libfmt-dev
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev
+          sudo apt-get install -y libvulkan-dev
           
           # Install X11 development libraries needed for GLFW
           sudo apt-get install -y libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev \
@@ -257,6 +256,7 @@ jobs:
           tools.build:compiler_executables={"c": "clang-16", "cpp": "clang++-16"}
           tools.cmake.cmaketoolchain:generator=Ninja
           tools.system.package_manager:mode=install
+          tools.system.package_manager:sudo=True
           EOF
           
           # Check that required tools are installed
@@ -265,11 +265,9 @@ jobs:
           clang++-16 --version
           ninja --version
           
-          # Install spdlog and other missing dependencies directly
-          sudo apt-get install -y libspdlog-dev
-          
           # Install dependencies with Conan (with verbose output for debugging)
-          conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=Debug -v
+          # Use sudo to avoid permission issues
+          sudo conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr=custom_profile -s build_type=Debug -v
           
           # List generated files in build directory and its subdirectories
           echo "Generated files in the build directory:"
@@ -283,6 +281,9 @@ jobs:
           fi
           
           echo "Found toolchain at: $TOOLCHAIN_PATH"
+          
+          # Make sure all files have appropriate permissions
+          sudo chown -R $USER:$USER .
           
           # Use the found toolchain file to configure CMake
           cmake .. -G Ninja -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_PATH" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++-16 -DCMAKE_C_COMPILER=clang-16 -DKST_BUILD_TESTS=ON -DKST_BUILD_COVERAGE=ON
@@ -330,7 +331,6 @@ jobs:
   static-analysis:
     name: Static Analysis
     runs-on: ubuntu-latest
-    needs: [setup]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
