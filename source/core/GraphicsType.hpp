@@ -116,7 +116,8 @@ namespace kst::core {
     );
   }
 
-  inline auto operator|=(BufferUsageFlags& flagA, BufferUsageFlags& flagB) -> BufferUsageFlags& {
+  inline auto operator|=(BufferUsageFlags& flagA, const BufferUsageFlags& flagB)
+      -> BufferUsageFlags& {
     return flagA = flagA | flagB;
   }
 
@@ -147,8 +148,44 @@ namespace kst::core {
     );
   }
 
-  inline auto operator|=(TextureUsageFlags& flagA, TextureUsageFlags& flagB) -> TextureUsageFlags& {
+  inline auto operator|=(TextureUsageFlags& flagA, const TextureUsageFlags& flagB)
+      -> TextureUsageFlags& {
     return flagA = flagA | flagB;
   }
+
+  /**
+   *  Resource states describe the current access pattern and layout of a resource
+   *  State transitions are necessary for synchronization between GPU operations
+   */
+  enum class ResourceState : std::uint8_t {
+    UNDEFINED,
+    GENERAL,             // General state, usable for every operation
+
+    VERTEX_BUFFER,       // Buffer is used as a vertex buffer
+    INDEX_BUFFER,        // Buffer is used as an index buffer
+    CONSTANT_BUFFER,     // Buffer is used as a constant/uniform Buffer
+    INDIRECT_BUFFER,     // Buffer is used for indirect draw commands
+    SHADER_RESOURCE,     // Buffer is used as a shader resource
+    UNORDERED_ACCESS,    // Buffer is used as an unordered access resource
+
+    RENDER_TARGET,       // Texture is used as a render target
+    DEPTH_STENCIL_READ,  // Texture is used a read-only depth/stencil buffer
+    DEPTH_STENCIL_WRITE, // Texture is used as a write-enabled depth/stencil buffer
+    SHADER_READ,         // Texture is used for shader reading
+    SHADER_WRITE,        // Texture is used for shader writing
+
+    COPY_SOURCE,         // Resource is used as a source for a copy operation
+    COPY_DESTINATION,    // Resource is used as a destination for a copy operation
+
+    // Present states
+    PRESENT
+  };
+
+  enum class MemoryDomain : std::uint8_t {
+    GPU_ONLY,    // Memory only accessible by the GPU, typically faster
+    CPU_TO_GPU,  // Memory for uploading to the GPU (CPU writes, GPU reads)
+    GPU_TO_CPU,  // Memory for downloading from the GPU (GPU writes, CPU reads)
+    CPU_AND_GPU, // Memory accessible by both CPU and GPU, typically slower
+  };
 
 } // namespace kst::core
