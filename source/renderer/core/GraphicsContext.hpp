@@ -94,7 +94,7 @@ namespace kst::renderer::core {
      *  @param width Output parameter to store the viewport width
      *  @param height Output parameter to store the viewport height
      */
-    virtual void getViewportDimensions(uint32_t* width, uint32_t* height) const = 0;
+    virtual void getViewportDimensions(uint32_t& width, uint32_t& height) const = 0;
 
     // Resource creation and management
 
@@ -107,7 +107,7 @@ namespace kst::renderer::core {
      *  @return Handle to the created buffer
      */
     virtual auto
-    createBuffer(uint64_t size, kst::core::BufferUsageFlags, ::kst::core::MemoryDomain memory)
+    createBuffer(uint64_t size, kst::core::BufferUsageFlags usage, ::kst::core::MemoryDomain memory)
         -> ::kst::core::BufferHandle = 0;
 
     /*

@@ -200,7 +200,7 @@ namespace kst::renderer::core {
      *  @param isDepthStencil Whether the texture is a depth or stencil texture (true)
      */
     virtual void clearTexture(
-        ::kst::core::TextureHandle,
+        ::kst::core::TextureHandle texture,
         const ::kst::core::ClearValue& clearValue,
         bool isDepthStencil
     ) = 0;
