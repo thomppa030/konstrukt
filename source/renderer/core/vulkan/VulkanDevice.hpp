@@ -15,7 +15,7 @@ namespace kst::renderer::core {
     void initialize(VkPhysicalDevice physicalDevice);
 
     auto supportsFeature(kst::core::FeatureFlag feature) -> bool override;
-    auto getMaxTextureSize() const -> bool override;
+    auto getMaxTextureSize() const -> uint32_t override;
     void getMaxComputeWorkGroups(uint32_t& maxX, uint32_t& maxY, uint32_t& maxZ) override;
 
     auto getDeviceLimits() const -> ::kst::core::Limits override;

@@ -30,7 +30,7 @@ namespace kst::renderer::core {
      *
      *  @return Maximum texture size in pixels (width/height)
      */
-    virtual auto getMaxTextureSize() const -> bool = 0;
+    virtual auto getMaxTextureSize() const -> uint32_t = 0;
 
     /*
      *  Get the maximum number of compute work groups supported
