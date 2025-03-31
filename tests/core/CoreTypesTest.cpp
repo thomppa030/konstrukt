@@ -20,18 +20,22 @@ TEST(CoreTypesTest, FeatureFlagBitwiseOperations) {
   EXPECT_EQ(static_cast<uint32_t>(combined), 0b11);
 
   // Test multiple flags
-  auto multifeature = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS | 
+  auto multifeature = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS |
                       FeatureFlag::GEOMETRY_SHADER;
   EXPECT_EQ(static_cast<uint32_t>(multifeature), 0b111);
 
   // Test AND operation
   auto features1 = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::TESSELLATION_SHADERS;
   auto features2 = FeatureFlag::COMPUTE_SHADERS | FeatureFlag::MESH_SHADER;
-  auto result = features1 & features2;
+  auto result    = features1 & features2;
   EXPECT_EQ(static_cast<uint32_t>(result), static_cast<uint32_t>(FeatureFlag::COMPUTE_SHADERS));
 
   // Test |= operator
   FeatureFlag features = FeatureFlag::NONE;
-  features |= FeatureFlag::RAY_TRACING;
-  EXPECT_EQ(static_cast<uint32_t>(features), static_cast<uint32_t>(FeatureFlag::RAY_TRACING));
-} 
+  features |= FeatureFlag::FILL_MODE_NON_SOLID;
+  EXPECT_EQ(
+      static_cast<uint32_t>(features),
+      static_cast<uint32_t>(FeatureFlag::FILL_MODE_NON_SOLID)
+  );
+}
+
