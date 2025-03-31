@@ -3,6 +3,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <numbers>
 #include <source_location>
 #include <string>
 #include <thread>
@@ -129,7 +130,7 @@ TEST_F(LoggerTestFixture, FormatAndContext) {
 
   // Test logging with format arguments
   int value = 42;
-  float pi  = 3.14159f;
+  float pi  = std::numbers::pi_v<float>;
 
   // Call the template version with explicit std::source_location parameter
   kst::core::Logger::info<int, float>(
@@ -996,81 +997,79 @@ TEST_F(LoggerTestFixture, LogAndAppLogLevelFiltering) {
 
   // Validate correct filtering when level was INFO
   // TRACE and DEBUG messages should not appear twice (only from TRACE level iteration)
-  int traceCountLog = 0;
-  int debugCountLog = 0;
+  int traceCountLog    = 0;
+  int debugCountLog    = 0;
   int traceCountAppLog = 0;
   int debugCountAppLog = 0;
-  
+
   std::string::size_type pos = 0;
   while ((pos = content.find("TRACE message via log()", pos)) != std::string::npos) {
     traceCountLog++;
     pos += strlen("TRACE message via log()");
   }
-  
+
   pos = 0;
   while ((pos = content.find("DEBUG message via log()", pos)) != std::string::npos) {
     debugCountLog++;
     pos += strlen("DEBUG message via log()");
   }
-  
+
   pos = 0;
   while ((pos = content.find("TRACE message via appLog()", pos)) != std::string::npos) {
     traceCountAppLog++;
     pos += strlen("TRACE message via appLog()");
   }
-  
+
   pos = 0;
   while ((pos = content.find("DEBUG message via appLog()", pos)) != std::string::npos) {
     debugCountAppLog++;
     pos += strlen("DEBUG message via appLog()");
   }
-  
+
   // We should only see these messages once (from the TRACE level iteration)
   EXPECT_EQ(traceCountLog, 1);
   EXPECT_EQ(debugCountLog, 1);
   EXPECT_EQ(traceCountAppLog, 1);
   EXPECT_EQ(debugCountAppLog, 1);
-  
+
   // Validate correct filtering when level was ERROR
   // INFO and WARN messages should only appear during TRACE and INFO iterations
   int infoCountLog = 0;
   int warnCountLog = 0;
-  
+
   pos = 0;
   while ((pos = content.find("INFO message via log()", pos)) != std::string::npos) {
     infoCountLog++;
     pos += strlen("INFO message via log()");
   }
-  
+
   pos = 0;
   while ((pos = content.find("WARN message via log()", pos)) != std::string::npos) {
     warnCountLog++;
     pos += strlen("WARN message via log()");
   }
-  
+
   // We should see these messages twice (from TRACE and INFO level iterations)
   EXPECT_EQ(infoCountLog, 2);
   EXPECT_EQ(warnCountLog, 2);
-  
+
   // ERROR and CRITICAL messages should appear in all three iterations
-  int errorCountLog = 0;
+  int errorCountLog    = 0;
   int criticalCountLog = 0;
-  
+
   pos = 0;
   while ((pos = content.find("ERROR message via log()", pos)) != std::string::npos) {
     errorCountLog++;
     pos += strlen("ERROR message via log()");
   }
-  
+
   pos = 0;
   while ((pos = content.find("CRITICAL message via log()", pos)) != std::string::npos) {
     criticalCountLog++;
     pos += strlen("CRITICAL message via log()");
   }
-  
+
   // We should see these messages three times (from all level iterations)
   EXPECT_EQ(errorCountLog, 3);
   EXPECT_EQ(criticalCountLog, 3);
 }
-
-
