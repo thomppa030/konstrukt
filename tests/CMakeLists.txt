@@ -8,6 +8,7 @@ add_executable(konstrukt_tests
     renderer/core/GraphicsTypeTest.cpp
     core/log/LoggerTest.cpp
     renderer/core/GraphicsHandlesTest.cpp
+    renderer/resources/ResourceIDTest.cpp
 )
 
 # Link against GTest, GMock and our libraries
