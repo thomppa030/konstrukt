@@ -1,8 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace kst::core {
+
+  using RenderResourceHandle = std::string;
 
   enum class MemoryDomain : std::uint8_t {
     GPU_ONLY,    // Memory only accessible by the GPU, typically faster
@@ -73,4 +76,3 @@ namespace kst::core {
   }
 
 } // namespace kst::core
-
