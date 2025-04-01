@@ -41,6 +41,8 @@ namespace kst::renderer::core {
     auto getCurrentBackBuffer() -> ::kst::core::TextureHandle override;
     auto getSwapchainFormat() const -> ::kst::core::Format override;
 
+    void registerSwapchainResource(const ::kst::renderer::resource::ResourceID& resource) override;
+
     void getViewportDimensions(uint32_t& width, uint32_t& height) const override;
 
     auto
@@ -95,9 +97,10 @@ namespace kst::renderer::core {
   private:
     // Helper functions for resource state transitions
     auto convertResourceStateToAccessFlags(::kst::core::ResourceState state) -> VkAccessFlags;
-    auto convertResourceStateToPipelineStage(::kst::core::ResourceState state) -> VkPipelineStageFlags;
+    auto convertResourceStateToPipelineStage(::kst::core::ResourceState state)
+        -> VkPipelineStageFlags;
     auto convertResourceStateToImageLayout(::kst::core::ResourceState state) -> VkImageLayout;
-    
+
     VkInstance m_instance             = VK_NULL_HANDLE;
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
     VkDevice m_device                 = VK_NULL_HANDLE;
@@ -120,7 +123,7 @@ namespace kst::renderer::core {
     std::vector<VkSemaphore> m_imageAvailalableSemaphores;
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
-    uint32_t m_currentFrame = 0;
+    uint32_t m_currentFrame      = 0;
     uint32_t m_currentImageIndex = 0;
 
     std::unordered_map<resource::ResourceID, VkBuffer> m_buffers;
@@ -154,6 +157,8 @@ namespace kst::renderer::core {
 
     auto getNextResourceId() -> uint64_t;
     uint64_t m_nextResourceId = 1;
+
+    resource::ResourceID m_swapchainResource;
   };
 
 } // namespace kst::renderer::core

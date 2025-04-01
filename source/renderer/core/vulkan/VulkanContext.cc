@@ -1292,9 +1292,13 @@ namespace kst::renderer::core {
   }
 
   auto VulkanContext::getCurrentBackBuffer() -> ::kst::core::TextureHandle {
-    // TODO: Implement back buffer retrieval
-
     ::kst::core::TextureHandle handle{};
+
+    if (m_currentImageIndex < m_swapchainImages.size()) {
+      handle.id = m_swapchainResource.index;
+
+      m_images[m_swapchainResource] = m_swapchainImages[m_currentImageIndex];
+    }
     return handle;
   }
 
@@ -1308,6 +1312,11 @@ namespace kst::renderer::core {
     default:
       return ::kst::core::Format::UNKNOWN;
     }
+  }
+
+  void
+  VulkanContext::registerSwapchainResource(const ::kst::renderer::resource::ResourceID& resource) {
+    m_swapchainResource = resource;
   }
 
   void VulkanContext::getViewportDimensions(uint32_t& width, uint32_t& height) const {

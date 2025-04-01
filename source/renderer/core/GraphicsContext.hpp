@@ -90,6 +90,9 @@ namespace kst::renderer::core {
      */
     virtual auto getSwapchainFormat() const -> ::kst::core::Format = 0;
 
+    virtual void
+    registerSwapchainResource(const ::kst::renderer::resource::ResourceID& resource) = 0;
+
     /*
      *  Get the current viewport dimensions
      *
