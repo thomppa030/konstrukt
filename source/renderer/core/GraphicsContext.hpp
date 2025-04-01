@@ -6,8 +6,10 @@
 #include <string_view>
 
 #include "CoreTypes.hpp"
+#include "renderer/commands/RenderCommand.hpp"
 #include "renderer/core/GraphicsHandles.hpp"
 #include "renderer/core/GraphicsType.hpp"
+#include "renderer/resources/ResourceID.hpp"
 
 namespace kst::renderer::core {
   class GraphicsDevice;
@@ -109,6 +111,14 @@ namespace kst::renderer::core {
     virtual auto
     createBuffer(uint64_t size, kst::core::BufferUsageFlags usage, ::kst::core::MemoryDomain memory)
         -> ::kst::core::BufferHandle = 0;
+
+    virtual void executeCommands(const command::RenderCommand* commands, size_t count) = 0;
+
+    virtual void transitionResource(
+        ::kst::renderer::resource::ResourceID resource,
+        ::kst::core::ResourceState oldState,
+        ::kst::core::ResourceState newState
+    ) = 0;
 
     /*
      *  Destroy a buffer resource

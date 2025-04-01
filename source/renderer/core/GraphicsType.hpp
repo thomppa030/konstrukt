@@ -92,6 +92,24 @@ namespace kst::core {
     BC7_SRGB
   };
 
+  /*
+   *  Describes what kind of Resource
+   */
+  enum class ResourceType : std::uint8_t {
+    UNKNOWN,         // Unknown or invalid resource type
+    BUFFER,
+    VERTEX_BUFFER,
+    INDEX_BUFFER,
+    UNIFORM_BUFFER,
+    STORAGE_BUFFER,
+    TEXTURE,
+    RENDER_TARGET,
+    DEPTH_STENCIL,
+    BINDLESS_TABLE,
+    MESH,            // Mesh resource containing geometry data
+    MATERIAL         // Material resource containing rendering properties
+  };
+
   /**
    *  Describes how a resource can be used by the GPU
    *  Can have multiple usage flags combined with bitwise OR
