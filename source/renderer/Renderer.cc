@@ -2,13 +2,16 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
+#include "GraphicsType.hpp"
 #include "core/log/Logger.hpp"
 #include "renderer/core/GraphicsContext.hpp"
 #include "renderer/core/vulkan/VulkanContext.hpp"
 #include "renderer/framegraph/FramegraphBuilder.hpp"
 #include "renderer/resources/ResourceManager.hpp"
 #include "renderer/resources/ResourceRegistry.hpp"
+#include "resources/RenderResource.hpp"
 
 namespace kst::renderer {
 
@@ -31,6 +34,10 @@ namespace kst::renderer {
     m_registry        = std::make_unique<resources::ResourceRegistry>();
     m_resourceManager = std::make_unique<resources::ResourceManager>(*m_context, *m_registry);
 
+    m_context->registerSwapchainResource(m_swapchainID);
+
+    m_registry->registerTexture(m_swapchainID, {});
+
     kst::core::Logger::info("Renderer initialization completed");
   }
 
@@ -42,12 +49,12 @@ namespace kst::renderer {
       m_resourceManager.reset();
       kst::core::Logger::debug("Resource manager destroyed");
     }
-    
+
     if (m_registry) {
       m_registry.reset();
       kst::core::Logger::debug("Resource registry destroyed");
     }
-    
+
     // Then shutdown graphics context (which will handle safe destruction of all Vulkan objects)
     if (m_context) {
       // Wait for all GPU operations to complete before destruction
@@ -56,7 +63,7 @@ namespace kst::renderer {
       } catch (const std::exception& e) {
         kst::core::Logger::error<const char*>("Error waiting for device idle: {}", e.what());
       }
-      
+
       try {
         // Reset the context which will trigger its destructor
         m_context.reset();
@@ -73,6 +80,35 @@ namespace kst::renderer {
     // Acquire the next swapchain image
     uint32_t imageIndex = m_context->beginFrame();
     kst::core::Logger::debug<uint32_t>("Begin frame, image index: {}", imageIndex);
+
+    m_currentFramegraph = framegraph::FrameGraph();
+
+    uint32_t width  = 0;
+    uint32_t height = 0;
+
+    resources::TextureDesc swapchainDesc;
+    swapchainDesc.width       = width;
+    swapchainDesc.height      = height;
+    swapchainDesc.depth       = 1;
+    swapchainDesc.mipLevels   = 1;
+    swapchainDesc.arrayLevels = 1;
+    swapchainDesc.cubeMap     = false;
+    swapchainDesc.format      = m_context->getSwapchainFormat();
+
+    resources::ResourceDesc swapchainResourceDesc(
+        ::kst::core::ResourceType::TEXTURE,
+        swapchainDesc
+    );
+
+    m_currentFramegraph.createResource(m_swapchainResourceName, swapchainResourceDesc);
+
+    auto* swapchainResource = m_currentFramegraph.getResource(m_swapchainResourceName);
+
+    if (swapchainResource != nullptr) {
+      swapchainResource->setResourceID(m_swapchainID);
+      swapchainResource->setState(::kst::core::ResourceState::RENDER_TARGET);
+      swapchainResource->setTransient(/*transient=*/false);
+    }
   }
 
   void Renderer::endFrame() {
@@ -96,8 +132,8 @@ namespace kst::renderer {
   }
 
   void Renderer::executeFramegraph(framegraph::FrameGraph& framegraph [[maybe_unused]]) {
-    // TODO: Implement framegraph execution
-    kst::core::Logger::debug("Executing framegraph");
+    framegraph.compile();
+    framegraph.execute(*m_context);
   }
 
   auto Renderer::getResourceManager() -> resources::ResourceManager& {
@@ -105,4 +141,3 @@ namespace kst::renderer {
   }
 
 } // namespace kst::renderer
-

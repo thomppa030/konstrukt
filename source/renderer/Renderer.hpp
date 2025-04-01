@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "renderer/core/GraphicsContext.hpp"
 #include "renderer/framegraph/FramegraphBuilder.hpp"
@@ -27,7 +28,11 @@ namespace kst::renderer {
     std::unique_ptr<core::GraphicsContext> m_context;
     std::unique_ptr<resources::ResourceRegistry> m_registry;
     std::unique_ptr<resources::ResourceManager> m_resourceManager;
+    resource::ResourceID m_swapchainResourceID;
     // std::unique_ptr<commands::CommandTranslator> m_commandTranslator;
     framegraph::FrameGraph m_currentFramegraph;
+
+    resource::ResourceID m_swapchainID;
+    std::string m_swapchainResourceName{"Swapchain"};
   };
 } // namespace kst::renderer
