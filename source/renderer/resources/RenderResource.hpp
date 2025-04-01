@@ -34,7 +34,7 @@ namespace kst::renderer::resources {
 
     ::kst::core::Format format = ::kst::core::Format::UNKNOWN; // Pixel Format (RGBA8, R32F, etc.)
 
-    ::kst::core::BufferUsageFlags
+    ::kst::core::ResourceState
         usage; // How this texture will be used (sampled, storage, render target, etc.)
                // Example: TextureUsage::Sampled | TextureUsage::RenderTarget
 
@@ -209,10 +209,13 @@ namespace kst::renderer::resources {
     auto getType() const -> ::kst::core::ResourceType { return m_type; }
 
     auto getState() const -> ::kst::core::ResourceState { return m_state; }
+    void setState(::kst::core::ResourceState state) { m_state = state; }
 
     auto getResourceID() const -> resource::ResourceID { return m_resourceID; }
+    void setResourceID(resource::ResourceID idx) { m_resourceID = idx; }
 
     auto isTransient() const -> bool { return m_transient; }
+    void setTransient(bool transient) { m_transient = transient; }
 
     auto isBindless() const -> bool { return m_bindlessIndex.has_value(); }
     auto getBindlessIndex() const -> uint32_t {
