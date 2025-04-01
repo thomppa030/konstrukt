@@ -8,6 +8,10 @@
 
 namespace kst::renderer::core {
 
+  VulkanDevice::VulkanDevice() {
+    // Default constructor, initialization will be done later
+  }
+
   void VulkanDevice::initialize(VkPhysicalDevice physicalDevice) {
     m_physicalDevice = physicalDevice;
 
