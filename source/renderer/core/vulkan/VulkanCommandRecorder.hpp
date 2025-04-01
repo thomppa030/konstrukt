@@ -25,16 +25,18 @@ namespace kst::renderer::core {
 
     void submit(bool waitForCompletion) override;
 
+
+
     void
-    bindVertexBuffer(::kst::core::BufferHandle buffer, uint32_t binding, uint64_t offset) override;
+    bindVertexBuffer(::kst::core::BufferHandle buffer [[maybe_unused]], uint32_t binding, uint64_t offset [[maybe_unused]]) override;
 
     void bindIndexBuffer(
-        ::kst::core::BufferHandle buffer,
-        uint64_t offset,
+        ::kst::core::BufferHandle buffer [[maybe_unused]],
+        uint64_t offset [[maybe_unused]],
         bool use32BitIndices
     ) override;
 
-    void bindPipeline(const ::kst::core::PipelineHandle& pipeline) override;
+    void bindPipeline(const ::kst::core::PipelineHandle& pipeline [[maybe_unused]]) override;
 
     void setViewport(
         uint32_t posX,
@@ -65,16 +67,16 @@ namespace kst::renderer::core {
     void dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 
     void copyBuffer(
-        ::kst::core::BufferHandle srcBuffer,
-        ::kst::core::BufferHandle dstBuffer,
-        uint64_t srdOffset,
-        uint64_t dstOffset,
+        ::kst::core::BufferHandle srcBuffer [[maybe_unused]],
+        ::kst::core::BufferHandle dstBuffer [[maybe_unused]],
+        uint64_t srcOffset [[maybe_unused]],
+        uint64_t dstOffset [[maybe_unused]],
         uint64_t size
     ) override;
 
     void copyTexture(
-        ::kst::core::TextureHandle srcTexture,
-        ::kst::core::TextureHandle dstTexture,
+        ::kst::core::TextureHandle srcTexture [[maybe_unused]],
+        ::kst::core::TextureHandle dstTexture [[maybe_unused]],
         const ::kst::core::TextureRegion& srcRegion,
         ::kst::core::TextureRegion& dstRegion
     ) override;
