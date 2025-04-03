@@ -9,6 +9,7 @@
 #include "ApplicationWindow.hpp"
 #include "Layer.hpp"
 #include "LayerStack.hpp"
+#include "core/config/Config.hpp"
 #include "core/log/Logger.hpp"
 #include "renderer/Renderer.hpp"
 
@@ -30,17 +31,40 @@ namespace kst::core::application {
   void Application::initialize() {
     kst::core::Logger::info("Initializing application");
 
-    // Create the window
-    const std::string title = "Konstrukt Engine";
-    const int width         = 1280;
-    const int height        = 720;
+    // Create the window with settings from config
+    const std::string title = kst::core::Config::getString("window.title", "Konstrukt Engine");
+    const int width         = kst::core::Config::getInt("window.width", 1280);
+    const int height        = kst::core::Config::getInt("window.height", 720);
+    const bool fullscreen   = kst::core::Config::getBool("window.fullscreen", false);
+    const bool resizable    = kst::core::Config::getBool("window.resizable", true);
 
-    if (!m_window->create(title, width, height)) {
+    kst::core::Logger::info<int, int, bool, bool>(
+        "Creating window: {}x{}, fullscreen: {}, resizable: {}",
+        width,
+        height,
+        fullscreen,
+        resizable
+    );
+
+    if (!m_window->create(title, width, height, fullscreen, resizable)) {
       throw std::runtime_error("Failed to create application window");
     }
 
     // Create and initialize the renderer
     m_renderer = std::make_unique<kst::renderer::Renderer>();
+
+    // Get renderer settings from config
+    const std::string api       = kst::core::Config::getString("renderer.api", "vulkan");
+    const int msaa              = kst::core::Config::getInt("renderer.msaa", 1);
+    const int maxFramesInFlight = kst::core::Config::getInt("renderer.maxFramesInFlight", 2);
+
+    kst::core::Logger::info<std::string, int, int>(
+        "Initializing renderer: API={}, MSAA={}x, MaxFramesInFlight={}",
+        api,
+        msaa,
+        maxFramesInFlight
+    );
+
     m_renderer->initialize(m_window->getNativeWindow(), width, height);
 
     // Set the resize callback

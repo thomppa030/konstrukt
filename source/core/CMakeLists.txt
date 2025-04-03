@@ -28,12 +28,20 @@ target_sources(konstrukt_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/application/VulkanTestLayer.hpp
 )
 
+# Add the config files
+target_sources(konstrukt_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.cc
+)
+
 # Find required packages
 find_package(spdlog REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 # Link against libraries
 target_link_libraries(konstrukt_core PRIVATE 
     spdlog::spdlog
     glfw
+    nlohmann_json::nlohmann_json
 )

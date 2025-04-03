@@ -33,6 +33,7 @@ class Konstrukt(ConanFile):
         # Logging and parsing
         self.requires("fmt/11.1.3")
         self.requires("spdlog/1.15.1", override=True)
+        self.requires("nlohmann_json/3.11.3")
 
         # UI
         self.requires("imgui/1.90.5-docking", override=True)

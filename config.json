@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Konstrukt Engine",
+    "version": "0.1.0",
+    "debug": true
+  },
+  "window": {
+    "width": 2560,
+    "height": 1440,
+    "title": "Konstrukt Engine",
+    "fullscreen": false,
+    "vsync": true,
+    "resizable": true
+  },
+  "renderer": {
+    "api": "vulkan",
+    "msaa": 4,
+    "gamma": 2.2,
+    "maxFramesInFlight": 2
+  },
+  "logging": {
+    "level": "info",
+    "console": true,
+    "file": true,
+    "filename": "konstrukt.log"
+  },
+  "debug": {
+    "validation": true,
+    "profiling": true
+  }
+}

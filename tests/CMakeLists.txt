@@ -5,6 +5,7 @@ add_executable(konstrukt_tests
     main.cpp
     core/memory/AllocatorTest.cpp
     core/CoreTypesTest.cpp
+    core/config/ConfigTest.cpp
     renderer/core/GraphicsTypeTest.cpp
     core/log/LoggerTest.cpp
     renderer/core/GraphicsHandlesTest.cpp

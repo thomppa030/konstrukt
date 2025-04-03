@@ -1,14 +1,41 @@
+#include <filesystem>
 #include <memory>
 
 #include "core/application/Application.hpp"
 #include "core/application/VulkanTestLayer.hpp"
+#include "core/config/Config.hpp"
 #include "core/log/Logger.hpp"
 
 auto main(int /*argc*/, char* /*argv*/[]) -> int {
   // Initialize the logger
   kst::core::Logger::init();
   kst::core::Logger::info<>("Starting Konstrukt engine...");
-  kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+
+  // Load configuration
+  if (kst::core::Config::init("config.json")) {
+    kst::core::Logger::info<>("Loaded configuration from config.json");
+
+    // Set log level from config
+    std::string logLevel = kst::core::Config::getString("logging.level", "info");
+    if (logLevel == "trace") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::TRACE);
+    } else if (logLevel == "debug") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::DEBUG);
+    } else if (logLevel == "info") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+    } else if (logLevel == "warn") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::WARN);
+    } else if (logLevel == "error") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::ERROR);
+    } else if (logLevel == "critical") {
+      kst::core::Logger::setLevel(kst::core::LogLevel::CRITICAL);
+    } else {
+      kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+    }
+  } else {
+    kst::core::Logger::warn<>("Failed to load config.json, using default settings");
+    kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+  }
 
   try {
     // Create and initialize the application

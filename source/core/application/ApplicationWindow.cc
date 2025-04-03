@@ -16,7 +16,7 @@ namespace kst::core::application {
     }
   }
 
-  auto Window::create(const std::string& title, int width, int height) -> bool {
+  auto Window::create(const std::string& title, int width, int height, bool fullscreen, bool resizable) -> bool {
     // Initialize GLFW if not already done
     if (glfwInit() == 0) {
       kst::core::Logger::error("Failed to initialize GLFW");
@@ -25,10 +25,23 @@ namespace kst::core::application {
 
     // Configure GLFW for Vulkan
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+
+    // Get monitor for fullscreen if needed
+    GLFWmonitor* monitor = nullptr;
+    if (fullscreen) {
+      monitor = glfwGetPrimaryMonitor();
+      if (monitor) {
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        if (mode) {
+          width = mode->width;
+          height = mode->height;
+        }
+      }
+    }
 
     // Create the window
-    m_nativeWindow = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    m_nativeWindow = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
     if (m_nativeWindow == nullptr) {
       kst::core::Logger::error("Failed to create GLFW window");
       glfwTerminate();

@@ -1240,7 +1240,7 @@ namespace kst::renderer::core {
   }
 
   void VulkanContext::recreateSwapchain() {
-    kst::core::Logger::info("Recreating swapchain");
+    kst::core::Logger::debug("Recreating swapchain");
 
     // Wait for the device to finish all operations
     vkDeviceWaitIdle(m_device);
@@ -1252,11 +1252,11 @@ namespace kst::renderer::core {
     createSwapchain(m_swapchainExtent.width, m_swapchainExtent.height);
     createImageViews();
 
-    kst::core::Logger::info("Swapchain recreated successfully");
+    kst::core::Logger::debug("Swapchain recreated successfully");
   }
 
   void VulkanContext::resize(uint32_t width, uint32_t height) {
-    kst::core::Logger::info<uint32_t, uint32_t>("Resizing to {} x {}", width, height);
+    kst::core::Logger::debug<uint32_t, uint32_t>("Resizing to {} x {}", width, height);
 
     // Store new dimensions
     m_swapchainExtent.width  = width;
@@ -1554,7 +1554,7 @@ namespace kst::renderer::core {
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
         VkRect2D scissor{};
-        scissor.offset = {0, 0};
+        scissor.offset = {.x = 0, .y = 0};
         scissor.extent = m_swapchainExtent;
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 

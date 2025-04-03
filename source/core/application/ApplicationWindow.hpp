@@ -21,7 +21,7 @@ namespace kst::core::application {
     Window(const Window&&)                     = delete;
     auto operator=(const Window&&) -> Window&& = delete;
 
-    auto create(const std::string& title, int width, int height) -> bool;
+    auto create(const std::string& title, int width, int height, bool fullscreen = false, bool resizable = true) -> bool;
     void destroy();
 
     void pollEvents();
