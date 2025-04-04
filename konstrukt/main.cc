@@ -11,27 +11,82 @@ auto main(int /*argc*/, char* /*argv*/[]) -> int {
   kst::core::Logger::init();
   kst::core::Logger::info<>("Starting Konstrukt engine...");
 
-  // Load configuration
-  if (kst::core::Config::init("config.json")) {
-    kst::core::Logger::info<>("Loaded configuration from config.json");
+  // Load configuration with file watching enabled
+  if (kst::core::Config::init("config.json", true)) {
+    kst::core::Logger::info<>("Loaded configuration from config.json with file watching enabled");
 
-    // Set log level from config
+    // Function to set log level from config
+    auto updateLogLevel = [](const std::string& level) {
+      if (level == "trace") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::TRACE);
+      } else if (level == "debug") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::DEBUG);
+      } else if (level == "info") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+      } else if (level == "warn") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::WARN);
+      } else if (level == "error") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::ERROR);
+      } else if (level == "critical") {
+        kst::core::Logger::setLevel(kst::core::LogLevel::CRITICAL);
+      } else {
+        kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
+      }
+    };
+
+    // Set initial log level
     std::string logLevel = kst::core::Config::getString("logging.level", "info");
-    if (logLevel == "trace") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::TRACE);
-    } else if (logLevel == "debug") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::DEBUG);
-    } else if (logLevel == "info") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
-    } else if (logLevel == "warn") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::WARN);
-    } else if (logLevel == "error") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::ERROR);
-    } else if (logLevel == "critical") {
-      kst::core::Logger::setLevel(kst::core::LogLevel::CRITICAL);
-    } else {
-      kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
-    }
+    updateLogLevel(logLevel);
+
+    // Register callback for log level changes
+    kst::core::Config::onValueChanged(
+        "logging.level",
+        [updateLogLevel](const std::string& /*key*/, const nlohmann::json& value) {
+          kst::core::Logger::info<const std::string&>(
+              "Log level changed to: {}",
+              value.get<std::string>()
+          );
+          updateLogLevel(value.get<std::string>());
+        }
+    );
+
+    // Register callbacks for window settings
+    kst::core::Config::onValueChanged(
+        "window.width",
+        [](const std::string& /*key*/, const nlohmann::json& value) {
+          kst::core::Logger::info<int>("Window width config changed to: {}", value.get<int>());
+        }
+    );
+
+    kst::core::Config::onValueChanged(
+        "window.height",
+        [](const std::string& /*key*/, const nlohmann::json& value) {
+          kst::core::Logger::info<int>("Window height config changed to: {}", value.get<int>());
+        }
+    );
+
+    // Register a global callback for debug purposes
+    kst::core::Config::onAnyValueChanged([](const std::string& key, const nlohmann::json& value) {
+      // Convert the value to a string for logging, regardless of type
+      std::string valueStr;
+      if (value.is_string()) {
+        valueStr = value.get<std::string>();
+      } else if (value.is_number_integer()) {
+        valueStr = std::to_string(value.get<int>());
+      } else if (value.is_number_float()) {
+        valueStr = std::to_string(value.get<float>());
+      } else if (value.is_boolean()) {
+        valueStr = value.get<bool>() ? "true" : "false";
+      } else {
+        valueStr = "<complex value>";
+      }
+
+      kst::core::Logger::debug<const std::string&, const std::string&>(
+          "Config changed: {} = {}",
+          key,
+          valueStr
+      );
+    });
   } else {
     kst::core::Logger::warn<>("Failed to load config.json, using default settings");
     kst::core::Logger::setLevel(kst::core::LogLevel::INFO);
