@@ -9,7 +9,7 @@
       "name": "debug",
       "displayName": "Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/debug",
+      "binaryDir": "${sourceDir}/build/Debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -20,7 +20,7 @@
       "name": "release",
       "displayName": "Release",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/release",
+      "binaryDir": "${sourceDir}/build/Release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -58,7 +58,9 @@
     {
       "name": "default",
       "configurePreset": "debug",
-      "output": {"outputOnFailure": true}
+      "output": {
+        "outputOnFailure": true
+      }
     },
     {
       "name": "coverage",
@@ -66,7 +68,9 @@
       "environment": {
         "LLVM_PROFILE_FILE": "${sourceDir}/build/coverage/default.profraw"
       },
-      "output": {"outputOnFailure": true}
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }

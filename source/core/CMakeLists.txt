@@ -35,9 +35,9 @@ target_sources(konstrukt_core PRIVATE
 )
 
 # Find required packages
-find_package(spdlog REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 # Link against libraries
 target_link_libraries(konstrukt_core PRIVATE 

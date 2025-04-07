@@ -21,6 +21,12 @@ option(KST_BUILD_RUNTIME "Build executable" ON)
 option(KST_BUILD_COVERAGE "Build with coverage reporting" OFF)
 ######### Options End ######
 
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/generators)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/generators)
+
+message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
 if(MSVC)
   add_compile_options(/W4 /WX)
 else()
@@ -36,11 +42,6 @@ if(KST_BUILD_COVERAGE)
     add_link_options(--coverage)
   endif()
 endif()
-
-find_package(Vulkan REQUIRED)
-find_package(glm REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(fmt REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 

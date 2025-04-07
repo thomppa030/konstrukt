@@ -1,9 +1,10 @@
 add_library(konstrukt_renderer STATIC)
 
-find_package(Boost REQUIRED)
-find_package(glm REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(glfw3 REQUIRED)
+find_package(Boost CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(VulkanLoader CONFIG REQUIRED)
+find_package(VulkanHeaders CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
 
 target_include_directories(konstrukt_renderer PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -65,9 +66,10 @@ target_sources(konstrukt_renderer PRIVATE
 
 # Link libraries
 target_link_libraries(konstrukt_renderer PRIVATE 
-    Boost::boost 
+    boost::boost
     glm::glm
-    Vulkan::Vulkan
+    Vulkan::Loader
+    vulkan-headers::vulkan-headers
     glfw
     konstrukt_core
 )
