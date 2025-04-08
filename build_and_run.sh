@@ -423,9 +423,9 @@ if [ "$RUN_TESTS" = true ] || [ "$GENERATE_COVERAGE" = true ]; then
   if [ "$GENERATE_COVERAGE" = true ]; then
     TEST_DIR="$BUILD_DIR/coverage"
   elif [ "$BUILD_TYPE" = "Debug" ]; then
-    TEST_DIR="$BUILD_DIR/debug"
+    TEST_DIR="$BUILD_DIR/Debug"
   else
-    TEST_DIR="$BUILD_DIR/release"
+    TEST_DIR="$BUILD_DIR/Release"
   fi
   
   # Find the test executable
@@ -492,7 +492,7 @@ if [ "$RUN_TESTS" = true ] || [ "$GENERATE_COVERAGE" = true ]; then
 fi
 
 # Only run the application if we're not running tests or generating coverage
-if [ "$RUN_TESTS" = false ] && [ "$GENERATE_COVERAGE" = false ]; then
+if [ "$RUN_TESTS" = false ] && [ "$GENERATE_COVERAGE" = false ] && [ "$RUN_BINARY" = true ]; then
   if [ -n "$EXECUTABLE" ] && [ -f "$EXECUTABLE" ] && [ -x "$EXECUTABLE" ]; then
     print_status "Running the application..."
     echo -e "\033[1;36m------------------------[Application Output]------------------------\033[0m"
