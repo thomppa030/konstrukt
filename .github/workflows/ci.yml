@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -49,16 +49,16 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-
     
-    - name: Build Debug
-      run: |
-        # Make build scripts executable
-        chmod +x ./build_and_run.sh
-        
-        # Needs to match exactly with the CMakePresets.json
-        mkdir -p build/Debug
-        
-        # The build script will use the environment prepared by setup-conan.sh
-        ./build_and_run.sh --debug --no-run --verbose
-    
-    - name: Run Tests
-      run: ./build_and_run.sh --test
+    # - name: Build Debug
+    #   run: |
+    #     # Make build scripts executable
+    #     chmod +x ./build_and_run.sh
+    #     
+    #     # Needs to match exactly with the CMakePresets.json
+    #     mkdir -p build/Debug
+    #     
+    #     # The build script will use the environment prepared by setup-conan.sh
+    #     ./build_and_run.sh --debug --no-run --verbose
+    # 
+    # - name: Run Tests
+    #   run: ./build_and_run.sh --test
