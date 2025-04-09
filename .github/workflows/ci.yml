@@ -19,23 +19,6 @@ jobs:
         sudo apt-get install -y cmake ninja-build build-essential python3-pip clang
         pip3 install conan
     
-    - name: Install Vulkan SDK
-      run: |
-        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
-        sudo apt update
-        sudo apt install -y vulkan-sdk
-        
-        # Add Vulkan SDK to PATH and LD_LIBRARY_PATH
-        echo "VULKAN_SDK=/usr" >> $GITHUB_ENV
-        echo "PATH=$PATH:/usr/bin" >> $GITHUB_ENV
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
-        echo "INCLUDE_PATH=$INCLUDE_PATH:/usr/include" >> $GITHUB_ENV
-        
-        # Verify Vulkan installation
-        ls -la /usr/include/vulkan || echo "Vulkan headers not found in /usr/include/vulkan"
-        pkg-config --cflags vulkan || echo "vulkan.pc not found"
-        
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
@@ -54,6 +37,13 @@ jobs:
       run: |
         conan --version
         conan profile detect --force
+        
+        # Add configuration for system package installation to Conan config
+        conan config set tools.system.package_manager:mode=install
+        conan config set tools.system.package_manager:sudo=True
+        
+        # Enable verbose output for debugging Conan issues
+        conan config set core.verbose_build=True
     
     - name: Cache CMake build
       uses: actions/cache@v4
@@ -63,20 +53,39 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-
     
+    # This step ensures vulkan package headers are in place before running the build script
+    - name: Prepare Vulkan Dependencies
+      run: |
+        # Run conan install separately to ensure Vulkan packages are available
+        mkdir -p build/Debug
+        cd build/Debug
+        conan install ../.. --build=missing
+        
+        # Find and display vulkan headers from Conan
+        VULKAN_HEADERS_PATH=$(find ~/.conan2/p -name "vulkan" -type d | grep include)
+        echo "Found Vulkan headers at: $VULKAN_HEADERS_PATH"
+        if [ -n "$VULKAN_HEADERS_PATH" ]; then
+          ls -la $VULKAN_HEADERS_PATH
+          echo "VULKAN_HEADERS_PATH=$VULKAN_HEADERS_PATH" >> $GITHUB_ENV
+        else
+          echo "Vulkan headers not found in Conan packages!"
+        fi
+    
     - name: Build Debug
       run: |
         # Make build scripts executable
         chmod +x ./build_and_run.sh
         chmod +x ./coverage.sh
         
-        # Needs to match exactly with the CMakePresets.json
-        mkdir -p build/Debug
+        # Export Vulkan headers location to help the build find them
+        if [ -n "$VULKAN_HEADERS_PATH" ]; then
+          export CPATH=$VULKAN_HEADERS_PATH:$CPATH
+          export C_INCLUDE_PATH=$VULKAN_HEADERS_PATH:$C_INCLUDE_PATH
+          export CPLUS_INCLUDE_PATH=$VULKAN_HEADERS_PATH:$CPLUS_INCLUDE_PATH
+        fi
         
-        # Show include paths that will be used
-        echo "VULKAN_SDK=$VULKAN_SDK"
-        echo "Include paths: $INCLUDE_PATH"
-        
-        ./build_and_run.sh --debug --no-run
+        # Run the build with extra verbosity
+        ./build_and_run.sh --debug --no-run --verbose
     
     - name: Run Tests
       run: ./build_and_run.sh --test
