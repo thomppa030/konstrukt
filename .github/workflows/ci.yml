@@ -37,13 +37,6 @@ jobs:
       run: |
         conan --version
         conan profile detect --force
-        
-        # Add configuration for system package installation to Conan config
-        conan config set tools.system.package_manager:mode=install
-        conan config set tools.system.package_manager:sudo=True
-        
-        # Enable verbose output for debugging Conan issues
-        conan config set core.verbose_build=True
     
     - name: Cache CMake build
       uses: actions/cache@v4
