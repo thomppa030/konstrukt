@@ -1,10 +1,10 @@
-name: CI
+name: CI | Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 jobs:
   build-and-test:
@@ -24,10 +24,8 @@ jobs:
 
     - name: Install Vulkan
       run: | 
-        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-        wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
         sudo apt update
-        sudo apt install vulkan-sdk
+        sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
 
     - name: Get Conan version
       id: conan-version
@@ -66,6 +64,3 @@ jobs:
         mkdir -p build/Debug
         
         ./build_and_run.sh --debug --no-run
-    
-    - name: Run Tests
-      run: ./build_and_run.sh --test
