@@ -9,6 +9,8 @@ USE_LIBCPP=${USE_LIBCPP:-false}
 GENERATOR=${GENERATOR:-"Ninja"}
 VERBOSE=${VERBOSE:-false}
 NUM_CORES=${NUM_CORES:-$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 2)}
+INSTALL_ONLY=${INSTALL_ONLY:-false}
+FORCE_INSTALL=${FORCE_INSTALL:-false}
 
 # --- Helper Functions ---
 print_status() {
@@ -139,40 +141,79 @@ EOF
   echo "$PROFILE_FILE"
 }
 
-# --- Run Conan Install ---
-run_conan_install() {
+# --- Install Dependencies with Conan ---
+install_dependencies() {
   local project_dir=$1
   local build_dir=$2
   local profile_path=$3
   local build_type=$4
   local verbose=$5
+  local force_install=$6
   
-  print_status "Running Conan to install dependencies (build type: $build_type)..."
+  print_status "Installing dependencies with Conan (build type: $build_type)..."
   
-  if [ "$verbose" = true ]; then
-    CONAN_VERBOSE="--verbose"
-  else
-    CONAN_VERBOSE=""
+  # Determine the appropriate build directory based on build type
+  local type_build_dir="$build_dir/$build_type"
+  mkdir -p "$type_build_dir"
+  
+  # Determine if we need to run Conan install
+  local need_install=false
+  if [ "$force_install" = true ]; then
+    need_install=true
+    print_status "Forced install requested"
+  elif [ ! -d "$type_build_dir/generators" ]; then
+    need_install=true
+    print_status "No generators found, running Conan install"
+  elif [ ! -f "$type_build_dir/generators/conan_toolchain.cmake" ]; then
+    need_install=true
+    print_status "Toolchain not found, running Conan install"
+  elif [ ! -f "$type_build_dir/conan_deps_installed" ]; then
+    need_install=true
+    print_status "First-time install or incomplete previous install"
   fi
   
-  cd "$build_dir"
-  conan install "$project_dir" --build=missing -g CMakeDeps -g CMakeToolchain -pr="$profile_path" -s build_type=$build_type $CONAN_VERBOSE
-  
-  TOOLCHAIN_PATH="$build_dir/$build_type/generators/conan_toolchain.cmake"
-  if [ ! -f "$TOOLCHAIN_PATH" ]; then
-    print_warning "Conan toolchain file not found at expected location: $TOOLCHAIN_PATH"
-    print_status "Searching for toolchain file..."
-    TOOLCHAIN_PATH=$(find "$build_dir" -name "conan_toolchain.cmake" | head -n 1)
+  if [ "$need_install" = true ]; then
+    # Set verbosity flag for Conan
+    if [ "$verbose" = true ]; then
+      CONAN_VERBOSE="--verbose"
+    else
+      CONAN_VERBOSE=""
+    fi
     
-    if [ -z "$TOOLCHAIN_PATH" ]; then
-      print_error "Could not find any toolchain file."
+    # Go to the build directory
+    cd "$type_build_dir"
+    
+    print_status "Running Conan install (this might take a while)..."
+    print_verbose "Command: conan install \"$project_dir\" --build=missing -g CMakeDeps -g CMakeToolchain -pr=\"$profile_path\" -s build_type=$build_type $CONAN_VERBOSE"
+    
+    # Run Conan install
+    conan install "$project_dir" --build=missing -g CMakeDeps -g CMakeToolchain -pr="$profile_path" -s build_type=$build_type $CONAN_VERBOSE
+    
+    # Create a marker file to indicate successful installation
+    touch "$type_build_dir/conan_deps_installed"
+    
+    print_status "Dependencies installed successfully"
+  else
+    print_status "Dependencies appear to be already installed, skipping. Use --force-install to reinstall."
+  fi
+  
+  # Verify toolchain exists
+  local toolchain_path="$type_build_dir/generators/conan_toolchain.cmake"
+  if [ ! -f "$toolchain_path" ]; then
+    print_warning "Conan toolchain file not found at expected location: $toolchain_path"
+    print_status "Searching for toolchain file..."
+    toolchain_path=$(find "$build_dir" -name "conan_toolchain.cmake" | head -n 1)
+    
+    if [ -z "$toolchain_path" ]; then
+      print_error "Could not find any toolchain file. Conan install may have failed."
       exit 1
     else
-      print_status "Found toolchain at: $TOOLCHAIN_PATH"
+      print_status "Found toolchain at: $toolchain_path"
     fi
   fi
   
-  echo "$TOOLCHAIN_PATH"
+  print_verbose "Toolchain file: $toolchain_path"
+  echo "$toolchain_path"
 }
 
 # --- Find Vulkan Headers ---
@@ -226,6 +267,8 @@ setup_conan_environment() {
   local generator=$GENERATOR
   local num_cores=$NUM_CORES
   local verbose=$VERBOSE
+  local install_only=$INSTALL_ONLY
+  local force_install=$FORCE_INSTALL
   
   # Check that we have the necessary parameters
   if [ -z "$project_dir" ] || [ -z "$build_dir" ]; then
@@ -256,6 +299,12 @@ setup_conan_environment() {
       --use-libcpp)
         use_libcpp=true
         ;;
+      --install-only)
+        install_only=true
+        ;;
+      --force-install)
+        force_install=true
+        ;;
     esac
     shift
   done
@@ -266,8 +315,14 @@ setup_conan_environment() {
   # Set up Conan profile
   local profile_path=$(setup_conan "$build_dir" "$compiler" "$build_type" "$use_libcpp" "$generator" "$num_cores" "$verbose")
   
-  # Run conan install
-  local toolchain_path=$(run_conan_install "$project_dir" "$build_dir" "$profile_path" "$build_type" "$verbose")
+  # Install dependencies
+  local toolchain_path=$(install_dependencies "$project_dir" "$build_dir" "$profile_path" "$build_type" "$verbose" "$force_install")
+  
+  # If install-only flag is set, exit after installation
+  if [ "$install_only" = true ]; then
+    print_status "Install-only mode: dependencies installed, exiting without further setup."
+    return 0
+  fi
   
   # Find Vulkan headers
   local vulkan_headers_path=$(find_vulkan_headers)
@@ -279,13 +334,54 @@ setup_conan_environment() {
   echo "$profile_path"
 }
 
+# Display script usage information
+show_usage() {
+  echo "Usage: source $0 <project_dir> <build_dir> [options]"
+  echo "  or:  $0 <project_dir> <build_dir> [options]"
+  echo ""
+  echo "Required arguments:"
+  echo "  project_dir       The root directory of your project (where conanfile.py is located)"
+  echo "  build_dir         The directory where build files will be stored"
+  echo ""
+  echo "Options:"
+  echo "  --build-type=TYPE   Specify build type (Debug, Release, etc.) [default: Release]"
+  echo "  --compiler=COMP     Specify compiler to use (clang, gcc) [default: clang]"
+  echo "  --generator=GEN     Specify CMake generator [default: Ninja]"
+  echo "  --cores=N           Specify number of cores for parallel build [default: auto]"
+  echo "  --verbose           Enable verbose output"
+  echo "  --use-libcpp        Use libc++ instead of libstdc++ (Clang only)"
+  echo "  --install-only      Only install dependencies, don't set up environment"
+  echo "  --force-install     Force reinstallation of dependencies"
+  echo ""
+  echo "Examples:"
+  echo "  # Set up Conan for a debug build with verbose output"
+  echo "  source .ci/setup-conan.sh . ./build --build-type=Debug --verbose"
+  echo ""
+  echo "  # Install dependencies only, don't set up environment"
+  echo "  .ci/setup-conan.sh . ./build --install-only"
+  echo ""
+  echo "  # Force reinstallation of dependencies"
+  echo "  source .ci/setup-conan.sh . ./build --force-install"
+}
+
 # If this script is being executed directly, not sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    show_usage
+    exit 0
+  fi
+
   if [ $# -lt 2 ]; then
     print_error "Missing required parameters: project_dir and build_dir"
-    print_error "Usage: $0 <project_dir> <build_dir> [options]"
+    show_usage
     exit 1
   fi
   
   setup_conan_environment "$@"
+else
+  # If being sourced, check for help flag
+  if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+    show_usage
+    return 0
+  fi
 fi
