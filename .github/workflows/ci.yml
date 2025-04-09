@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -33,10 +33,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-conan-${{ steps.conan-version.outputs.version }}-
     
-    - name: Configure Conan
+    - name: Configure Conan environment
       run: |
-        conan --version
-        conan profile detect --force
+        # Make CI scripts executable
+        chmod +x .ci/setup-conan.sh
+        
+        # Source the conan setup script
+        source .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug --verbose
     
     - name: Cache CMake build
       uses: actions/cache@v4
@@ -46,38 +49,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-
     
-    # This step ensures vulkan package headers are in place before running the build script
-    - name: Prepare Vulkan Dependencies
-      run: |
-        # Run conan install separately to ensure Vulkan packages are available
-        mkdir -p build/Debug
-        cd build/Debug
-        conan install ../.. --build=missing
-        
-        # Find and display vulkan headers from Conan
-        VULKAN_HEADERS_PATH=$(find ~/.conan2/p -name "vulkan" -type d | grep include)
-        echo "Found Vulkan headers at: $VULKAN_HEADERS_PATH"
-        if [ -n "$VULKAN_HEADERS_PATH" ]; then
-          ls -la $VULKAN_HEADERS_PATH
-          echo "VULKAN_HEADERS_PATH=$VULKAN_HEADERS_PATH" >> $GITHUB_ENV
-        else
-          echo "Vulkan headers not found in Conan packages!"
-        fi
-    
     - name: Build Debug
       run: |
         # Make build scripts executable
         chmod +x ./build_and_run.sh
-        chmod +x ./coverage.sh
         
-        # Export Vulkan headers location to help the build find them
-        if [ -n "$VULKAN_HEADERS_PATH" ]; then
-          export CPATH=$VULKAN_HEADERS_PATH:$CPATH
-          export C_INCLUDE_PATH=$VULKAN_HEADERS_PATH:$C_INCLUDE_PATH
-          export CPLUS_INCLUDE_PATH=$VULKAN_HEADERS_PATH:$CPLUS_INCLUDE_PATH
-        fi
+        # Needs to match exactly with the CMakePresets.json
+        mkdir -p build/Debug
         
-        # Run the build with extra verbosity
+        # The build script will use the environment prepared by setup-conan.sh
         ./build_and_run.sh --debug --no-run --verbose
     
     - name: Run Tests
