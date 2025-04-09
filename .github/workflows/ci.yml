@@ -22,11 +22,6 @@ jobs:
         sudo apt-get install -y libspdlog-dev nlohmann-json3-dev libglm-dev
         pip3 install conan
 
-    - name: Install Vulkan
-      run: | 
-        sudo apt update
-        sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-tools
-
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT

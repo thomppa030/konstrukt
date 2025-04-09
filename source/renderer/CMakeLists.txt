@@ -7,6 +7,7 @@ find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
 target_include_directories(konstrukt_renderer PUBLIC
+    ${vulkan-headers_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/core
 )
