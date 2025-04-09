@@ -1,11 +1,9 @@
-name: CI | Build
-
+name: CI
 on:
   push:
     branches: [ main, dev ]
   pull_request:
     branches: [ main, dev ]
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -13,23 +11,31 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install dependencies
+    - name: Install core build tools
       run: |
         wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
         sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" -y
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential python3-pip clang 
-        sudo apt-get install -y libspdlog-dev nlohmann-json3-dev libglm-dev
+        sudo apt-get install -y cmake ninja-build build-essential python3-pip clang
         pip3 install conan
-
-    - name: Get Vulkan Pub Vulkan Key
-      run: wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
-
+    
     - name: Install Vulkan SDK
-      run: sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list http://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list
-           sudo apt update
-           sudo apt install vulkan-sdk
-
+      run: |
+        wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+        sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-jammy.list http://packages.lunarg.com/vulkan/lunarg-vulkan-jammy.list
+        sudo apt update
+        sudo apt install -y vulkan-sdk
+        
+        # Add Vulkan SDK to PATH and LD_LIBRARY_PATH
+        echo "VULKAN_SDK=/usr" >> $GITHUB_ENV
+        echo "PATH=$PATH:/usr/bin" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/x86_64-linux-gnu" >> $GITHUB_ENV
+        echo "INCLUDE_PATH=$INCLUDE_PATH:/usr/include" >> $GITHUB_ENV
+        
+        # Verify Vulkan installation
+        ls -la /usr/include/vulkan || echo "Vulkan headers not found in /usr/include/vulkan"
+        pkg-config --cflags vulkan || echo "vulkan.pc not found"
+        
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
@@ -40,7 +46,7 @@ jobs:
         path: |
           ~/.conan2/p
           ~/.conan2/cache
-        key: ${{ runner.os }}-conan-${{ steps.conan-version.outputs.version }}-${{ hashFiles('**/conanfile.txt', '**/conanfile.py') }}
+        key: ${{ runner.os }}-conan-${{ steps.conan-version.outputs.version }}-${{ hashFiles('**/conanfile.py') }}
         restore-keys: |
           ${{ runner.os }}-conan-${{ steps.conan-version.outputs.version }}-
     
@@ -48,7 +54,7 @@ jobs:
       run: |
         conan --version
         conan profile detect --force
-
+    
     - name: Cache CMake build
       uses: actions/cache@v4
       with:
@@ -66,4 +72,11 @@ jobs:
         # Needs to match exactly with the CMakePresets.json
         mkdir -p build/Debug
         
+        # Show include paths that will be used
+        echo "VULKAN_SDK=$VULKAN_SDK"
+        echo "Include paths: $INCLUDE_PATH"
+        
         ./build_and_run.sh --debug --no-run
+    
+    - name: Run Tests
+      run: ./build_and_run.sh --test
