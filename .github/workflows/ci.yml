@@ -25,7 +25,7 @@ jobs:
     - name: Install Vulkan
       run: | 
         sudo apt update
-        sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-utils
+        sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-tools
 
     - name: Get Conan version
       id: conan-version
