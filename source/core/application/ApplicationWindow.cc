@@ -10,6 +10,17 @@
 namespace kst::core::application {
 
   namespace {
+    /**
+     * @brief GLFW callback function for window resize events
+     * @param window The GLFW window that was resized
+     * @param width New window width in pixels
+     * @param height New window height in pixels
+     * 
+     * This wrapper retrieves the Window instance from GLFW's user pointer and forwards
+     * the resize event to the registered callback. This approach allows us to:
+     * 1. Use C++ member functions for callbacks, even though GLFW requires C-style functions
+     * 2. Maintain encapsulation by hiding GLFW-specific code in this anonymous namespace
+     */
     void glfwResizeCallback(GLFWwindow* window, int width, int height) {
       auto* appWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
       if ((appWindow != nullptr) && appWindow->getResizeCallback()) {
@@ -17,7 +28,6 @@ namespace kst::core::application {
       }
     }
   } // namespace
-  // Static callback for GLFW resize events
 
   Window::~Window() {
     // Unregister config callbacks
