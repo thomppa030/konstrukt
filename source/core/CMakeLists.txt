@@ -34,13 +34,19 @@ target_sources(konstrukt_core PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.cc
 )
 
+# Add the utility files
+target_sources(konstrukt_core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils/FileUtils.hpp
+)
 # Find required packages
+find_package(Boost CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 # Link against libraries
 target_link_libraries(konstrukt_core PRIVATE 
+    boost::boost
     spdlog::spdlog
     glfw
     nlohmann_json::nlohmann_json
