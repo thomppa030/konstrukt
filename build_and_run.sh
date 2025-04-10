@@ -302,87 +302,6 @@ check_dependencies() {
   print_status "Dependency check passed."
 }
 
-# --- Conan Profile Setup ---
-setup_compiler() {
-  # Configure compiler for Conan profile
-  if [ "$COMPILER" = "clang" ]; then
-    COMP_SETTINGS="compiler=clang"
-    COMP_VERSION=$(clang --version | grep -oP 'version \K[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
-    
-    if [ -z "$COMP_VERSION" ]; then
-      COMP_VERSION=$(clang --version | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
-    fi
-    
-    if [ -z "$COMP_VERSION" ]; then
-      print_warning "Could not detect Clang version, assuming version 15"
-      COMP_VERSION="15"
-    fi
-    
-    print_verbose "Detected Clang version: $COMP_VERSION"
-    
-    if [ "$USE_LIBCPP" = true ]; then
-      print_status "Configuring Clang with libc++"
-      STDLIB_SETTING="compiler.libcxx=libc++"
-      CONAN_FLAGS="-stdlib=libc++"
-    else
-      print_status "Configuring Clang with libstdc++11"
-      STDLIB_SETTING="compiler.libcxx=libstdc++11"
-      CONAN_FLAGS=""
-    fi
-    
-    export CC=clang
-    export CXX=clang++
-    export CXXFLAGS="$CONAN_FLAGS"
-    export LDFLAGS="$CONAN_FLAGS"
-    
-  elif [ "$COMPILER" = "gcc" ]; then
-    COMP_SETTINGS="compiler=gcc"
-    COMP_VERSION=$(g++ -dumpversion | cut -d. -f1)
-    STDLIB_SETTING="compiler.libcxx=libstdc++11"
-    
-    print_verbose "Detected GCC version: $COMP_VERSION"
-    
-    export CC=gcc
-    export CXX=g++
-  else
-    print_error "Unsupported compiler: $COMPILER"
-    exit 1
-  fi
-  
-  if [ "$(uname)" = "Linux" ]; then
-    DETECTED_OS="Linux"
-  elif [ "$(uname)" = "Darwin" ]; then
-    DETECTED_OS="Macos" # Conan uses "Macos" not "Darwin"
-  else
-    DETECTED_OS="$(uname)"
-  fi
-  
-  PROFILE_FILE="$BUILD_DIR/custom_profile"
-  mkdir -p "$BUILD_DIR"
-  
-  # Create the profile with proper formatting
-  cat > "$PROFILE_FILE" << EOF
-[settings]
-arch=x86_64
-build_type=$BUILD_TYPE
-$COMP_SETTINGS
-compiler.version=$COMP_VERSION
-$STDLIB_SETTING
-compiler.cppstd=20
-os=$DETECTED_OS
-
-[conf]
-tools.build:compiler_executables={"c": "$CC", "cpp": "$CXX"}
-tools.cmake.cmaketoolchain:generator=$GENERATOR
-tools.build:jobs=$NUM_CORES
-tools.system.package_manager:mode=install
-tools.system.package_manager:sudo=True
-EOF
-
-  print_verbose "Created Conan profile:"
-  print_verbose "$(cat $PROFILE_FILE)"
-}
-
 # --- Relink compile_commands.json ---
 relink_compile_commands() {
   print_status "Relinking compile_commands.json..."
@@ -426,54 +345,45 @@ detect_system_type
 # 1. Clean Build Directory if requested
 if [ "$CLEAN_BUILD" = true ]; then
   print_status "Cleaning build directory..."
-  source $SCRIPT_DIR/clean.sh
+  if [ -f "$SCRIPT_DIR/clean.sh" ]; then
+    source $SCRIPT_DIR/clean.sh
+  else
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+  fi
 fi
 
 # 2. Create Build Directory if it doesn't exist
 if [ ! -d "$BUILD_DIR" ]; then
   print_status "Creating build directory..."
   mkdir -p "$BUILD_DIR"
-  NEED_CONAN=true
 fi
 
 # 3. Check Dependencies
 check_dependencies
 
-# 4. Setup Conan Profile
-setup_compiler
-
-# 5. Run Conan Install
-cd "$BUILD_DIR"
-
-if [ "$NEED_CONAN" = true ] || [ "$CLEAN_BUILD" = true ] || [ ! -d "$BUILD_DIR/$BUILD_TYPE" ] || [ ! -f "$BUILD_DIR/$BUILD_TYPE/generators/conan_toolchain.cmake" ]; then
-  print_status "Running Conan to install dependencies (build type: $BUILD_TYPE, compiler: $COMPILER)..."
+# 4. Setup Conan using the module
+if [ -f "$SCRIPT_DIR/.ci/setup-conan.sh" ]; then
+  print_status "Setting up Conan environment using .ci module..."
+  CONAN_ARGS=""
+  [ "$VERBOSE" = true ] && CONAN_ARGS="$CONAN_ARGS --verbose"
+  [ "$USE_LIBCPP" = true ] && CONAN_ARGS="$CONAN_ARGS --use-libcpp"
   
-  if [ "$VERBOSE" = true ]; then
-    CONAN_VERBOSE="--verbose"
-  else
-    CONAN_VERBOSE=""
-  fi
-  
-  conan install .. --build=missing -g CMakeDeps -g CMakeToolchain -pr="$PROFILE_FILE" -s build_type=$BUILD_TYPE $CONAN_VERBOSE
+  source "$SCRIPT_DIR/.ci/setup-conan.sh" "$SCRIPT_DIR" "$BUILD_DIR" \
+    --build-type="$BUILD_TYPE" \
+    --compiler="$COMPILER" \
+    --generator="$GENERATOR" \
+    --cores="$NUM_CORES" \
+    $CONAN_ARGS
+else
+  print_error "Conan setup module not found at .ci/setup-conan.sh"
+  print_warning "Please ensure the .ci directory exists with the setup-conan.sh script"
+  exit 1
 fi
 
-TOOLCHAIN_PATH="$BUILD_DIR/$BUILD_TYPE/generators/conan_toolchain.cmake"
-if [ ! -f "$TOOLCHAIN_PATH" ]; then
-  print_error "Conan toolchain file not found at expected location: $TOOLCHAIN_PATH"
-  print_status "Searching for toolchain file..."
-  TOOLCHAIN_PATH=$(find "$BUILD_DIR" -name "conan_toolchain.cmake" | head -n 1)
-  
-  if [ -z "$TOOLCHAIN_PATH" ]; then
-    print_error "Could not find any toolchain file."
-    exit 1
-  else
-    print_status "Found toolchain at: $TOOLCHAIN_PATH"
-  fi
-fi
-
+# 5. CMake Configuration and Build
 cd "$SCRIPT_DIR"
 
-# 6. Run CMake Configuration and Build using Presets
 if [ "$GENERATE_COVERAGE" = true ]; then
   print_status "Running CMake configuration with coverage enabled..."
   cmake --preset=coverage
@@ -491,7 +401,7 @@ else
   relink_compile_commands
 fi
 
-# 7. Find Executable
+# 6. Find Executable
 EXECUTABLE="$BUILD_DIR/${EXEC_NAME}"
 if [ ! -f "$EXECUTABLE" ]; then
   if [ -f "$BUILD_DIR/$BUILD_TYPE/${EXEC_NAME}" ]; then
@@ -507,7 +417,7 @@ fi
 
 print_status "Build successful!"
 
-# 8. Handle tests and coverage together
+# 7. Handle tests and coverage together
 if [ "$RUN_TESTS" = true ] || [ "$GENERATE_COVERAGE" = true ]; then
   # Determine the build directory
   if [ "$GENERATE_COVERAGE" = true ]; then
@@ -581,7 +491,7 @@ if [ "$RUN_TESTS" = true ] || [ "$GENERATE_COVERAGE" = true ]; then
   fi
 fi
 
-# 9. Run Application
+# 8. Run Application
 # Only run if tests/coverage weren't the primary goal
 if [ "$RUN_TESTS" = false ] && [ "$GENERATE_COVERAGE" = false ] && [ "$RUN_BINARY" = true ]; then
   if [ -n "$EXECUTABLE" ] && [ -f "$EXECUTABLE" ] && [ -x "$EXECUTABLE" ]; then
