@@ -2,6 +2,7 @@ add_library(konstrukt_renderer STATIC)
 
 find_package(Boost CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(Assimp CONFIG REQUIRED)
 find_package(VulkanLoader CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
@@ -47,6 +48,8 @@ target_sources(konstrukt_renderer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/ResourceManager.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/RenderResource.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resources/RenderResource.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources/ModelLoader.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources/ModelLoader.cc
 )
 
 # Main renderer
@@ -70,6 +73,7 @@ target_link_libraries(konstrukt_renderer PRIVATE
     boost::boost
     glm::glm
     Vulkan::Loader
+    assimp::assimp
     vulkan-headers::vulkan-headers
     glfw
     konstrukt_core

@@ -96,7 +96,7 @@ namespace kst::core {
    *  Describes what kind of Resource
    */
   enum class ResourceType : std::uint8_t {
-    UNKNOWN,         // Unknown or invalid resource type
+    UNKNOWN, // Unknown or invalid resource type
     BUFFER,
     VERTEX_BUFFER,
     INDEX_BUFFER,
@@ -106,8 +106,9 @@ namespace kst::core {
     RENDER_TARGET,
     DEPTH_STENCIL,
     BINDLESS_TABLE,
-    MESH,            // Mesh resource containing geometry data
-    MATERIAL         // Material resource containing rendering properties
+    MESH,     // Mesh resource containing geometry data
+    MATERIAL, // Material resource containing rendering properties
+    MODEL
   };
 
   /**
