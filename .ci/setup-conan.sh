@@ -135,9 +135,6 @@ EOF
   print_verbose "Created Conan profile:"
   print_verbose "$(cat $PROFILE_FILE)"
   
-  # Configure Conan global settings
-  conan config set core.verbose_build=$verbose
-  
   echo "$PROFILE_FILE"
 }
 
@@ -155,6 +152,22 @@ install_dependencies() {
   # Determine the appropriate build directory based on build type
   local type_build_dir="$build_dir/$build_type"
   mkdir -p "$type_build_dir"
+  
+  # First check if conanfile.py exists in the project directory
+  if [ ! -f "$project_dir/conanfile.py" ]; then
+    print_error "conanfile.py not found in $project_dir"
+    print_warning "Checking for conanfile.txt instead..."
+    
+    if [ ! -f "$project_dir/conanfile.txt" ]; then
+      print_error "No conanfile.txt or conanfile.py found in $project_dir"
+      print_error "Please make sure your project has a valid Conan file at the root directory."
+      exit 1
+    else
+      print_status "Found conanfile.txt"
+    fi
+  else
+    print_verbose "Found conanfile.py"
+  fi
   
   # Determine if we need to run Conan install
   local need_install=false
@@ -180,14 +193,28 @@ install_dependencies() {
       CONAN_VERBOSE=""
     fi
     
+    # Create the build directory if it doesn't exist
+    print_verbose "Creating build directory: $type_build_dir"
+    mkdir -p "$type_build_dir"
+    
     # Go to the build directory
     cd "$type_build_dir"
     
     print_status "Running Conan install (this might take a while)..."
+    
+    # Determine whether to use the project directory or current directory for install
     print_verbose "Command: conan install \"$project_dir\" --build=missing -g CMakeDeps -g CMakeToolchain -pr=\"$profile_path\" -s build_type=$build_type $CONAN_VERBOSE"
     
-    # Run Conan install
+    set +e  # Temporarily disable exit on error to handle Conan errors
     conan install "$project_dir" --build=missing -g CMakeDeps -g CMakeToolchain -pr="$profile_path" -s build_type=$build_type $CONAN_VERBOSE
+    CONAN_EXIT_CODE=$?
+    set -e  # Re-enable exit on error
+    
+    if [ $CONAN_EXIT_CODE -ne 0 ]; then
+      print_error "Conan install failed with exit code $CONAN_EXIT_CODE"
+      print_error "Try running with --verbose for more information"
+      exit $CONAN_EXIT_CODE
+    fi
     
     # Create a marker file to indicate successful installation
     touch "$type_build_dir/conan_deps_installed"
@@ -219,14 +246,27 @@ install_dependencies() {
 # --- Find Vulkan Headers ---
 find_vulkan_headers() {
   print_status "Locating Vulkan headers from Conan packages..."
-  local vulkan_headers_path=$(find ~/.conan2/p -name "vulkan" -type d | grep include | head -n 1)
   
-  if [ -n "$vulkan_headers_path" ] && [ -d "$vulkan_headers_path" ]; then
+  # Use a more reliable method to find Vulkan headers
+  local vulkan_pkg_path=$(find ~/.conan2/p -path "*/include/vulkan/vulkan.h" 2>/dev/null | head -n1)
+  
+  if [ -n "$vulkan_pkg_path" ]; then
+    local vulkan_headers_path=$(dirname "$(dirname "$vulkan_pkg_path")")
     print_status "Found Vulkan headers at: $vulkan_headers_path"
     echo "$vulkan_headers_path"
   else
-    print_warning "Vulkan headers not found in Conan packages!"
-    echo ""
+    print_warning "Vulkan headers not found in Conan packages at the expected location"
+    
+    # Try a broader search
+    local vulkan_headers_path=$(find ~/.conan2/p -path "*/vulkan-headers*/include" 2>/dev/null | head -n1)
+    
+    if [ -n "$vulkan_headers_path" ]; then
+      print_status "Found Vulkan headers at: $vulkan_headers_path"
+      echo "$vulkan_headers_path"
+    else
+      print_warning "Vulkan headers not found in any Conan package"
+      echo ""
+    fi
   fi
 }
 
@@ -236,13 +276,39 @@ export_include_paths() {
   
   if [ -n "$vulkan_headers_path" ] && [ -d "$vulkan_headers_path" ]; then
     print_status "Exporting Vulkan include paths..."
-    export CPATH="$vulkan_headers_path:$CPATH"
-    export C_INCLUDE_PATH="$vulkan_headers_path:$C_INCLUDE_PATH"
-    export CPLUS_INCLUDE_PATH="$vulkan_headers_path:$CPLUS_INCLUDE_PATH"
+    
+    # Avoid prepending to empty variables which can lead to path issues with leading colons
+    if [ -n "$CPATH" ]; then
+      export CPATH="$vulkan_headers_path:$CPATH"
+    else
+      export CPATH="$vulkan_headers_path"
+    fi
+    
+    if [ -n "$C_INCLUDE_PATH" ]; then
+      export C_INCLUDE_PATH="$vulkan_headers_path:$C_INCLUDE_PATH"
+    else
+      export C_INCLUDE_PATH="$vulkan_headers_path"
+    fi
+    
+    if [ -n "$CPLUS_INCLUDE_PATH" ]; then
+      export CPLUS_INCLUDE_PATH="$vulkan_headers_path:$CPLUS_INCLUDE_PATH"
+    else
+      export CPLUS_INCLUDE_PATH="$vulkan_headers_path"
+    fi
     
     # For CMake
-    export CMAKE_INCLUDE_PATH="$vulkan_headers_path:$CMAKE_INCLUDE_PATH"
-    export CMAKE_PREFIX_PATH="$(dirname $(dirname $vulkan_headers_path)):$CMAKE_PREFIX_PATH"
+    if [ -n "$CMAKE_INCLUDE_PATH" ]; then
+      export CMAKE_INCLUDE_PATH="$vulkan_headers_path:$CMAKE_INCLUDE_PATH"
+    else
+      export CMAKE_INCLUDE_PATH="$vulkan_headers_path"
+    fi
+    
+    local prefix_path=$(dirname "$(dirname "$vulkan_headers_path")")
+    if [ -n "$CMAKE_PREFIX_PATH" ]; then
+      export CMAKE_PREFIX_PATH="$prefix_path:$CMAKE_PREFIX_PATH"
+    else
+      export CMAKE_PREFIX_PATH="$prefix_path"
+    fi
     
     print_verbose "Updated include paths:"
     print_verbose "CPATH=$CPATH"
@@ -273,9 +339,21 @@ setup_conan_environment() {
   # Check that we have the necessary parameters
   if [ -z "$project_dir" ] || [ -z "$build_dir" ]; then
     print_error "Missing required parameters: project_dir and build_dir"
-    print_error "Usage: source conan-setup.sh <project_dir> <build_dir> [options]"
+    print_error "Usage: source setup-conan.sh <project_dir> <build_dir> [options]"
     return 1
   fi
+  
+  # Convert to absolute paths if they're relative
+  if [[ ! "$project_dir" = /* ]]; then
+    project_dir="$(pwd)/$project_dir"
+  fi
+  
+  if [[ ! "$build_dir" = /* ]]; then
+    build_dir="$(pwd)/$build_dir"
+  fi
+  
+  print_verbose "Using project directory: $project_dir"
+  print_verbose "Using build directory: $build_dir"
   
   # Process optional arguments
   shift 2
