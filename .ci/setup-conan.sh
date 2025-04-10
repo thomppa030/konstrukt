@@ -45,107 +45,13 @@ detect_system_type() {
   echo "$SYSTEM_TYPE"
 }
 
-# --- Setup Conan ---
-setup_conan() {
-  local build_dir=$1
-  local compiler=$2
-  local build_type=$3
-  local use_libcpp=$4
-  local generator=$5
-  local num_cores=$6
-  local verbose=$7
-
-  print_status "Configuring Conan..."
-  
-  # Configure compiler for Conan profile
-  if [ "$compiler" = "clang" ]; then
-    COMP_SETTINGS="compiler=clang"
-    COMP_VERSION=$(clang --version | grep -oP 'version \K[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
-    
-    if [ -z "$COMP_VERSION" ]; then
-      COMP_VERSION=$(clang --version | head -n1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | cut -d. -f1)
-    fi
-    
-    if [ -z "$COMP_VERSION" ]; then
-      print_warning "Could not detect Clang version, assuming version 15"
-      COMP_VERSION="15"
-    fi
-    
-    print_verbose "Detected Clang version: $COMP_VERSION"
-    
-    if [ "$use_libcpp" = true ]; then
-      print_status "Configuring Clang with libc++"
-      STDLIB_SETTING="compiler.libcxx=libc++"
-      CONAN_FLAGS="-stdlib=libc++"
-    else
-      print_status "Configuring Clang with libstdc++11"
-      STDLIB_SETTING="compiler.libcxx=libstdc++11"
-      CONAN_FLAGS=""
-    fi
-    
-    export CC=clang
-    export CXX=clang++
-    export CXXFLAGS="$CONAN_FLAGS"
-    export LDFLAGS="$CONAN_FLAGS"
-    
-  elif [ "$compiler" = "gcc" ]; then
-    COMP_SETTINGS="compiler=gcc"
-    COMP_VERSION=$(g++ -dumpversion | cut -d. -f1)
-    STDLIB_SETTING="compiler.libcxx=libstdc++11"
-    
-    print_verbose "Detected GCC version: $COMP_VERSION"
-    
-    export CC=gcc
-    export CXX=g++
-  else
-    print_error "Unsupported compiler: $compiler"
-    exit 1
-  fi
-  
-  if [ "$(uname)" = "Linux" ]; then
-    DETECTED_OS="Linux"
-  elif [ "$(uname)" = "Darwin" ]; then
-    DETECTED_OS="Macos" # Conan uses "Macos" not "Darwin"
-  else
-    DETECTED_OS="$(uname)"
-  fi
-  
-  PROFILE_FILE="$build_dir/custom_profile"
-  mkdir -p "$build_dir"
-  
-  # Create the profile with proper formatting
-  cat > "$PROFILE_FILE" << EOF
-[settings]
-arch=x86_64
-build_type=$build_type
-$COMP_SETTINGS
-compiler.version=$COMP_VERSION
-$STDLIB_SETTING
-compiler.cppstd=20
-os=$DETECTED_OS
-
-[conf]
-tools.build:compiler_executables={"c": "$CC", "cpp": "$CXX"}
-tools.cmake.cmaketoolchain:generator=$generator
-tools.build:jobs=$num_cores
-tools.system.package_manager:mode=install
-tools.system.package_manager:sudo=True
-EOF
-
-  print_verbose "Created Conan profile:"
-  print_verbose "$(cat $PROFILE_FILE)"
-  
-  echo "$PROFILE_FILE"
-}
-
 # --- Install Dependencies with Conan ---
 install_dependencies() {
   local project_dir=$1
   local build_dir=$2
-  local profile_path=$3
-  local build_type=$4
-  local verbose=$5
-  local force_install=$6
+  local build_type=$3
+  local verbose=$4
+  local force_install=$5
   
   print_status "Installing dependencies with Conan (build type: $build_type)..."
   
@@ -202,11 +108,11 @@ install_dependencies() {
     
     print_status "Running Conan install (this might take a while)..."
     
-    # Determine whether to use the project directory or current directory for install
-    print_verbose "Command: conan install \"$project_dir\" --build=missing -g CMakeDeps -g CMakeToolchain -pr=\"$profile_path\" -s build_type=$build_type $CONAN_VERBOSE"
+    # Use the default profile but override build_type
+    print_verbose "Command: conan install \"$project_dir\" --build=missing -g CMakeDeps -g CMakeToolchain -s build_type=$build_type $CONAN_VERBOSE"
     
     set +e  # Temporarily disable exit on error to handle Conan errors
-    conan install "$project_dir" --build=missing -g CMakeDeps -g CMakeToolchain -pr="$profile_path" -s build_type=$build_type $CONAN_VERBOSE
+    conan install "$project_dir" --build=missing -g CMakeDeps -g CMakeToolchain -s build_type=$build_type $CONAN_VERBOSE
     CONAN_EXIT_CODE=$?
     set -e  # Re-enable exit on error
     
@@ -242,34 +148,6 @@ install_dependencies() {
   print_verbose "Toolchain file: $toolchain_path"
   echo "$toolchain_path"
 }
-
-# --- Find Vulkan Headers ---
-find_vulkan_headers() {
-  print_status "Locating Vulkan headers from Conan packages..."
-  
-  # Use a more reliable method to find Vulkan headers
-  local vulkan_pkg_path=$(find ~/.conan2/p -path "*/include/vulkan/vulkan.h" 2>/dev/null | head -n1)
-  
-  if [ -n "$vulkan_pkg_path" ]; then
-    local vulkan_headers_path=$(dirname "$(dirname "$vulkan_pkg_path")")
-    print_status "Found Vulkan headers at: $vulkan_headers_path"
-    echo "$vulkan_headers_path"
-  else
-    print_warning "Vulkan headers not found in Conan packages at the expected location"
-    
-    # Try a broader search
-    local vulkan_headers_path=$(find ~/.conan2/p -path "*/vulkan-headers*/include" 2>/dev/null | head -n1)
-    
-    if [ -n "$vulkan_headers_path" ]; then
-      print_status "Found Vulkan headers at: $vulkan_headers_path"
-      echo "$vulkan_headers_path"
-    else
-      print_warning "Vulkan headers not found in any Conan package"
-      echo ""
-    fi
-  fi
-}
-
 # --- Export Include Paths ---
 export_include_paths() {
   local vulkan_headers_path=$1
@@ -328,10 +206,6 @@ setup_conan_environment() {
   local project_dir=$1
   local build_dir=$2
   local build_type=$BUILD_TYPE
-  local compiler=$COMPILER
-  local use_libcpp=$USE_LIBCPP
-  local generator=$GENERATOR
-  local num_cores=$NUM_CORES
   local verbose=$VERBOSE
   local install_only=$INSTALL_ONLY
   local force_install=$FORCE_INSTALL
@@ -343,13 +217,19 @@ setup_conan_environment() {
     return 1
   fi
   
-  # Convert to absolute paths if they're relative
+  # Convert to absolute paths with proper normalization
   if [[ ! "$project_dir" = /* ]]; then
-    project_dir="$(pwd)/$project_dir"
+    if [ "$project_dir" = "." ]; then
+      project_dir="$(pwd)"
+    else
+      project_dir="$(realpath "$project_dir")"
+    fi
   fi
   
   if [[ ! "$build_dir" = /* ]]; then
-    build_dir="$(pwd)/$build_dir"
+    # Create the directory if it doesn't exist
+    mkdir -p "$build_dir"
+    build_dir="$(realpath "$build_dir")"
   fi
   
   print_verbose "Using project directory: $project_dir"
@@ -362,20 +242,8 @@ setup_conan_environment() {
       --build-type=*)
         build_type="${1#*=}"
         ;;
-      --compiler=*)
-        compiler="${1#*=}"
-        ;;
-      --generator=*)
-        generator="${1#*=}"
-        ;;
-      --cores=*)
-        num_cores="${1#*=}"
-        ;;
       --verbose)
         verbose=true
-        ;;
-      --use-libcpp)
-        use_libcpp=true
         ;;
       --install-only)
         install_only=true
@@ -387,14 +255,8 @@ setup_conan_environment() {
     shift
   done
   
-  # Detect system
-  local system_type=$(detect_system_type)
-  
-  # Set up Conan profile
-  local profile_path=$(setup_conan "$build_dir" "$compiler" "$build_type" "$use_libcpp" "$generator" "$num_cores" "$verbose")
-  
-  # Install dependencies
-  local toolchain_path=$(install_dependencies "$project_dir" "$build_dir" "$profile_path" "$build_type" "$verbose" "$force_install")
+  # Install dependencies using default profile
+  local toolchain_path=$(install_dependencies "$project_dir" "$build_dir" "$build_type" "$verbose" "$force_install")
   
   # If install-only flag is set, exit after installation
   if [ "$install_only" = true ]; then
@@ -409,39 +271,7 @@ setup_conan_environment() {
   export_include_paths "$vulkan_headers_path"
   
   print_status "Conan environment setup complete"
-  echo "$profile_path"
 }
-
-# Display script usage information
-show_usage() {
-  echo "Usage: source $0 <project_dir> <build_dir> [options]"
-  echo "  or:  $0 <project_dir> <build_dir> [options]"
-  echo ""
-  echo "Required arguments:"
-  echo "  project_dir       The root directory of your project (where conanfile.py is located)"
-  echo "  build_dir         The directory where build files will be stored"
-  echo ""
-  echo "Options:"
-  echo "  --build-type=TYPE   Specify build type (Debug, Release, etc.) [default: Release]"
-  echo "  --compiler=COMP     Specify compiler to use (clang, gcc) [default: clang]"
-  echo "  --generator=GEN     Specify CMake generator [default: Ninja]"
-  echo "  --cores=N           Specify number of cores for parallel build [default: auto]"
-  echo "  --verbose           Enable verbose output"
-  echo "  --use-libcpp        Use libc++ instead of libstdc++ (Clang only)"
-  echo "  --install-only      Only install dependencies, don't set up environment"
-  echo "  --force-install     Force reinstallation of dependencies"
-  echo ""
-  echo "Examples:"
-  echo "  # Set up Conan for a debug build with verbose output"
-  echo "  source .ci/setup-conan.sh . ./build --build-type=Debug --verbose"
-  echo ""
-  echo "  # Install dependencies only, don't set up environment"
-  echo "  .ci/setup-conan.sh . ./build --install-only"
-  echo ""
-  echo "  # Force reinstallation of dependencies"
-  echo "  source .ci/setup-conan.sh . ./build --force-install"
-}
-
 # If this script is being executed directly, not sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then

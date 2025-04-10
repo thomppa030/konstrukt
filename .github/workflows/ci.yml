@@ -35,10 +35,8 @@ jobs:
     
     - name: Configure Conan environment
       run: |
-        # Make CI scripts executable
         chmod +x .ci/setup-conan.sh
         
-        # Source the conan setup script
         source .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug --verbose
     
     - name: Cache CMake build
