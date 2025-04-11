@@ -45,6 +45,11 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
+add_subdirectory(vendor/fmt EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/spdlog EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/vulkan-headers EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/nlohmann_json EXCLUDE_FROM_ALL)
+
 add_subdirectory(source/core)
 add_subdirectory(source/renderer)
 

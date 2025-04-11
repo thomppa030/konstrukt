@@ -10,6 +10,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
     - name: Install LLVM repository
       run: |
@@ -25,7 +27,7 @@ jobs:
 
     - name: Install core build tools
       run: |
-        sudo apt-get install -y python3-pip libglm-dev nlohmann-json3-dev libspdlog-dev libabsl-dev
+        sudo apt-get install -y python3-pip libglm-dev libabsl-dev
         sudo apt-get install -y libvulkan-dev vulkan-tools
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
@@ -46,7 +48,6 @@ jobs:
       run: |
         git clone https://github.com/fmtlib/fmt.git
         cd fmt
-        git checkout 9.1.0  # Choose the specific version you need
         mkdir build && cd build
         cmake ..
         make -j$(nproc)

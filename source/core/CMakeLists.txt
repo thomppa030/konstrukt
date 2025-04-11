@@ -2,6 +2,10 @@ add_library(konstrukt_core STATIC)
 
 target_include_directories(konstrukt_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/vendor/fmt/include
+    ${CMAKE_SOURCE_DIR}/vendor/spdlog/include
+    ${CMAKE_SOURCE_DIR}/vendor/vulkan-headers/include
+    ${CMAKE_SOURCE_DIR}/vendor/nlohmann_json/include
 )
 
 target_sources(konstrukt_core PRIVATE
@@ -40,16 +44,14 @@ target_sources(konstrukt_core PRIVATE
 )
 # Find required packages
 find_package(Boost CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 # Link against libraries
 target_link_libraries(konstrukt_core PRIVATE 
     boost::boost
-    fmt::fmt
-    spdlog::spdlog
+    spdlog::spdlog_header_only
     glfw
     nlohmann_json::nlohmann_json
 )
