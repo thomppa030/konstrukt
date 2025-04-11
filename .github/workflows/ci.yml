@@ -10,29 +10,52 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install LLVM repository
       run: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main"
         sudo apt-get update
-    
+
+    - name: Get latest CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: latestrc      # <--= optional, use the latest release candidate (notice the 'rc' suffix).
+        ninjaVersion: latest        # <--= optional, use the latest release (non candidate).
+
+    - name: Prepare Vulkan SDK
+      uses: humbletim/setup-vulkan-sdk@v1.2.1
+      with:
+       vulkan-query-version: 1.4.304.1
+       vulkan-components: Vulkan-Headers, Vulkan-Loader
+       vulkan-use-cache: true
+
     - name: Install core build tools
       run: |
-        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-        sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" -y
-        sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential python3-pip libglm-dev nlohmann-json3-dev libspdlog-dev libabsl-dev
+        sudo apt-get install -y python3-pip libglm-dev nlohmann-json3-dev libspdlog-dev libabsl-dev
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
-        sudo apt-get install -y libvulkan-dev vulkan-tools
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
-        pip3 install conan
-    
+
     - name: Verify Clang version
       run: |
         clang++ --version
-    
+
+    - name: Install Conan
+      id: conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: Conan version
+      run: echo "${{ steps.conan.outputs.version }}"
+
+    - name: Install FMT
+      uses: maximeverreault/setup-fmt@v1.0.0
+      id: install_fmt
+      with:
+        version: latest
+        toolset: Ninja
+        directory: ${{ runner.temp }}/fmt
+
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
