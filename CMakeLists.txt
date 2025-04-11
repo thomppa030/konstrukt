@@ -46,6 +46,12 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source)
 
 add_subdirectory(vendor/fmt EXCLUDE_FROM_ALL)
+
+set(SPDLOG_FMT_EXTERNAL OFF CACHE BOOL "Use bundled fmt" FORCE)
+set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Disable spdlog examples" FORCE)
+set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "Disable spdlog tests" FORCE)
+set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "Disable spdlog benchmarks" FORCE)
+
 add_subdirectory(vendor/spdlog EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/vulkan-headers EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/nlohmann_json EXCLUDE_FROM_ALL)
