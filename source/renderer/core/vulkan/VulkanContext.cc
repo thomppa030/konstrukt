@@ -13,28 +13,12 @@
 #include "core/CoreTypes.hpp"
 #include "core/log/Logger.hpp"
 
-// Include platform-specific Vulkan headers
-#ifdef _WIN32
-#  define VK_USE_PLATFORM_WIN32_KHR
-#  define GLFW_EXPOSE_NATIVE_WIN32
-#elif defined(__linux__)
-#  define VK_USE_PLATFORM_XLIB_KHR
-#  define VK_USE_PLATFORM_WAYLAND_KHR
-#  define GLFW_EXPOSE_NATIVE_X11
-#  define GLFW_EXPOSE_NATIVE_WAYLAND
-#elif defined(__APPLE__)
-#  define VK_USE_PLATFORM_MACOS_MVK
-#  define GLFW_EXPOSE_NATIVE_COCOA
-#endif
-
 // Include GLFW with native platform support
 #include <GLFW/glfw3.h>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3native.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
-#include <vulkan/vulkan_wayland.h>
-#include <vulkan/vulkan_xlib.h>
 
 #include "renderer/core/GraphicsDevice.hpp"
 
@@ -470,16 +454,6 @@ namespace kst::renderer::core {
     for (uint32_t i = 0; i < glfwExtensionCount; i++) {
       extensions.push_back(glfwExtensions[i]);
     }
-
-    // Add additional platform-specific extensions
-#ifdef _WIN32
-    extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(__linux__)
-    extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
-    extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
-#elif defined(__APPLE__)
-    extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#endif
 
     if (enableValidationLayers) {
       extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
