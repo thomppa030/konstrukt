@@ -32,6 +32,8 @@ jobs:
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+        rm -rf .conan2/p
+        rm -rf .conan2/cache
 
     - name: Verify Clang version
       run: |
@@ -102,4 +104,4 @@ jobs:
       run: |
         export CC=clang-19
         export CXX=clang++-19
-        ./build_and_run.sh --test --skip-conan
+        ./build_and_run.sh --debug --test --skip-conan
