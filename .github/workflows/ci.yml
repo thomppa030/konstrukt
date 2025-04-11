@@ -24,6 +24,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential python3-pip libglm-dev nlohmann-json3-dev
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
+        sudo apt-get install -y libvulkan-dev vulkan-headers vulkan-tools
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
         pip3 install conan
