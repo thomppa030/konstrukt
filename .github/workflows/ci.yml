@@ -23,16 +23,10 @@ jobs:
         cmakeVersion: latestrc      # <--= optional, use the latest release candidate (notice the 'rc' suffix).
         ninjaVersion: latest        # <--= optional, use the latest release (non candidate).
 
-    - name: Prepare Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.1
-      with:
-       vulkan-query-version: 1.4.304.1
-       vulkan-components: Vulkan-Headers, Vulkan-Loader
-       vulkan-use-cache: true
-
     - name: Install core build tools
       run: |
         sudo apt-get install -y python3-pip libglm-dev nlohmann-json3-dev libspdlog-dev libabsl-dev
+        sudo apt-get install -y libvulkan-dev vulkan-tools
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
         sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
