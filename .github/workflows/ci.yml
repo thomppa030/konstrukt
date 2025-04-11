@@ -46,17 +46,6 @@ jobs:
     - name: Conan version
       run: echo "${{ steps.conan.outputs.version }}"
 
-    - name: Install fmt library
-      run: |
-        git clone https://github.com/fmtlib/fmt.git
-        cd fmt
-        mkdir build && cd build
-        cmake ..
-        make -j$(nproc)
-        sudo make install
-        # Make sure the library is discoverable
-        sudo ldconfig
-
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
