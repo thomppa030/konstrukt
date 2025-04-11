@@ -48,13 +48,17 @@ jobs:
     - name: Conan version
       run: echo "${{ steps.conan.outputs.version }}"
 
-    - name: Install FMT
-      uses: maximeverreault/setup-fmt@v1.0.0
-      id: install_fmt
-      with:
-        version: latest
-        toolset: Ninja
-        directory: ${{ runner.temp }}/fmt
+    - name: Install fmt library
+      run: |
+        git clone https://github.com/fmtlib/fmt.git
+        cd fmt
+        git checkout 9.1.0  # Choose the specific version you need
+        mkdir build && cd build
+        cmake ..
+        make -j$(nproc)
+        sudo make install
+        # Make sure the library is discoverable
+        sudo ldconfig
 
     - name: Get Conan version
       id: conan-version
