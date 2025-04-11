@@ -20,6 +20,7 @@ class Konstrukt(ConanFile):
             "build", str(self.settings.build_type))
 
     def requirements(self):
+        self.requires("zstd/1.5.7", override=True)
         # Vulkan requirements
         self.requires("vulkan-loader/1.4.309.0")
         self.requires("vulkan-headers/1.4.309.0")
