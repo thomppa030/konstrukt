@@ -369,7 +369,7 @@ if [ -f "$SCRIPT_DIR/.ci/setup-conan.sh" ]; then
   [ "$VERBOSE" = true ] && CONAN_ARGS="$CONAN_ARGS --verbose"
   [ "$USE_LIBCPP" = true ] && CONAN_ARGS="$CONAN_ARGS --use-libcpp"
   # Add this to your build_and_run.sh
-  source .ci/setup-conan.sh "$SCRIPT_DIR" "$BUILD_DIR" --build-type="$BUILD_TYPE" --compiler="$COMPILER"
+  bash .ci/setup-conan.sh "$SCRIPT_DIR" "$BUILD_DIR" --build-type="$BUILD_TYPE"
 else
   print_error "Conan setup module not found at .ci/setup-conan.sh"
   print_warning "Please ensure the .ci directory exists with the setup-conan.sh script"

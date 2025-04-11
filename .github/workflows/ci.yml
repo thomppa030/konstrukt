@@ -37,7 +37,7 @@ jobs:
       run: |
         chmod +x .ci/setup-conan.sh
         
-        source .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug --verbose
+        bash .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug
     
     - name: Cache CMake build
       uses: actions/cache@v4
