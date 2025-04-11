@@ -32,7 +32,7 @@ class Konstrukt(ConanFile):
         self.requires("glm/1.0.1")
 
         # Logging and parsing
-        self.requires("fmt/11.1.3")
+        self.requires("fmt/11.1.3", override=True)
         self.requires("spdlog/1.15.1")
 
         self.requires("nlohmann_json/3.11.3")

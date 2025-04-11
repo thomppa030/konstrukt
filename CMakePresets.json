@@ -24,7 +24,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER": "clang++",
-        "KST_BUILD_TESTS": "ON"
+        "KST_BUILD_TESTS": "OFF"
       }
     },
     {

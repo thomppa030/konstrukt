@@ -23,7 +23,6 @@ jobs:
         sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" -y
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential python3-pip libglm-dev nlohmann-json3-dev libspdlog-dev libabsl-dev
-        sudo apt-get install -y libfmt-dev
         sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
         sudo apt-get install -y libvulkan-dev vulkan-tools
         sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
