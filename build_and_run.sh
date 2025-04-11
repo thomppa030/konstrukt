@@ -18,6 +18,7 @@ BUILD_TYPE="Release" # Default build type
 COMPILER="clang"     # Default compiler
 GENERATOR="Ninja"    # Default CMake generator
 CLEAN_BUILD=false    # Perform a clean build?
+INSTALL_CONAN=true   # Setup conan and install packages?
 USE_LIBCPP=false     # Use libc++ with Clang?
 VERBOSE=false        # Show verbose output?
 RUN_BINARY=true      # Run the executable after building?
@@ -47,7 +48,10 @@ while [ $# -gt 0 ]; do
       RUN_TESTS=true 
       shift
       ;;
-
+    --skip-conan)
+      INSTALL_CONAN=false
+      shift
+      ;;
     # Compiler Options
     --compiler=*)
       COMPILER="${1#*=}"
@@ -363,22 +367,19 @@ fi
 check_dependencies
 
 # 4. Setup Conan using the module
+if [ "$INSTALL_CONAN" = true ]; then
 if [ -f "$SCRIPT_DIR/.ci/setup-conan.sh" ]; then
   print_status "Setting up Conan environment using .ci module..."
   CONAN_ARGS=""
   [ "$VERBOSE" = true ] && CONAN_ARGS="$CONAN_ARGS --verbose"
   [ "$USE_LIBCPP" = true ] && CONAN_ARGS="$CONAN_ARGS --use-libcpp"
-  
-  source "$SCRIPT_DIR/.ci/setup-conan.sh" "$SCRIPT_DIR" "$BUILD_DIR" \
-    --build-type="$BUILD_TYPE" \
-    --compiler="$COMPILER" \
-    --generator="$GENERATOR" \
-    --cores="$NUM_CORES" \
-    $CONAN_ARGS
+  # Add this to your build_and_run.sh
+  bash .ci/setup-conan.sh "$SCRIPT_DIR" "$BUILD_DIR" --build-type="$BUILD_TYPE"
 else
   print_error "Conan setup module not found at .ci/setup-conan.sh"
   print_warning "Please ensure the .ci directory exists with the setup-conan.sh script"
   exit 1
+fi
 fi
 
 # 5. CMake Configuration and Build

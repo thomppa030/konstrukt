@@ -20,21 +20,13 @@ class Konstrukt(ConanFile):
             "build", str(self.settings.build_type))
 
     def requirements(self):
-        # Vulkan requirements
-        self.requires("vulkan-loader/1.4.309.0")
-        self.requires("vulkan-headers/1.4.309.0")
+        self.requires("zstd/1.5.7", override=True)
 
         # Display
         self.requires("glfw/3.4")
 
         # Math
         self.requires("glm/1.0.1")
-
-        # Logging and parsing
-        self.requires("fmt/11.1.3")
-        self.requires("spdlog/1.15.1")
-
-        self.requires("nlohmann_json/3.11.3")
 
         self.requires("boost/1.87.0")
 

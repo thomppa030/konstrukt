@@ -183,6 +183,7 @@ namespace kst::renderer::resources {
         break;
       case ::kst::core::ResourceType::UNKNOWN:
       case ::kst::core::ResourceType::MESH:
+      case ::kst::core::ResourceType::MODEL:
       case ::kst::core::ResourceType::MATERIAL:
         break;
       }

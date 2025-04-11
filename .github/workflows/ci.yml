@@ -10,15 +10,42 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
+      with:
+        submodules: recursive
+
+    - name: Install LLVM repository
+      run: |
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main"
+        sudo apt-get update
+
+    - name: Get latest CMake and Ninja
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: latestrc      # <--= optional, use the latest release candidate (notice the 'rc' suffix).
+        ninjaVersion: latest        # <--= optional, use the latest release (non candidate).
+
     - name: Install core build tools
       run: |
-        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-        sudo apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" -y
-        sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential python3-pip clang
-        pip3 install conan
-    
+        sudo apt-get install -y python3-pip libglm-dev libabsl-dev
+        sudo apt-get install -y libvulkan-dev vulkan-tools
+        sudo apt-get install -y clang-19 libc++-19-dev libc++abi-19-dev lld-19
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+        rm -rf .conan2/p
+        rm -rf .conan2/cache
+
+    - name: Verify Clang version
+      run: |
+        clang++ --version
+
+    - name: Install Conan
+      id: conan
+      uses: turtlebrowser/get-conan@main
+
+    - name: Conan version
+      run: echo "${{ steps.conan.outputs.version }}"
+
     - name: Get Conan version
       id: conan-version
       run: echo "version=$(conan --version | grep -oP '(?<=Conan version )[0-9]+\.[0-9]+\.[0-9]+')" >> $GITHUB_OUTPUT
@@ -35,11 +62,9 @@ jobs:
     
     - name: Configure Conan environment
       run: |
-        # Make CI scripts executable
         chmod +x .ci/setup-conan.sh
         
-        # Source the conan setup script
-        source .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug --verbose
+        bash .ci/setup-conan.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/build" --build-type=Debug
     
     - name: Cache CMake build
       uses: actions/cache@v4
@@ -49,16 +74,23 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}-
     
-    # - name: Build Debug
-    #   run: |
-    #     # Make build scripts executable
-    #     chmod +x ./build_and_run.sh
-    #     
-    #     # Needs to match exactly with the CMakePresets.json
-    #     mkdir -p build/Debug
-    #     
-    #     # The build script will use the environment prepared by setup-conan.sh
-    #     ./build_and_run.sh --debug --no-run --verbose
-    # 
-    # - name: Run Tests
-    #   run: ./build_and_run.sh --test
+    - name: Build Debug
+      run: |
+        # Make build scripts executable
+        chmod +x ./build_and_run.sh
+        
+        # Needs to match exactly with the CMakePresets.json
+        mkdir -p build/Debug
+        
+        # Set compiler environment variables explicitly
+        export CC=clang-19
+        export CXX=clang++-19
+        
+        # The build script will use the environment prepared by setup-conan.sh
+        ./build_and_run.sh --debug --no-run --verbose --skip-conan
+
+    - name: Run Tests
+      run: |
+        export CC=clang-19
+        export CXX=clang++-19
+        ./build_and_run.sh --debug --test --skip-conan
