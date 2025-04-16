@@ -27,14 +27,19 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators")
 if(MSVC)
   add_compile_options(/W4 /WX)
 else()
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options( -Wno-nullability-extension
+  -Wno-missing-designated-field-initializers
+  -Wno-nullability-completeness
+  -Wno-defaulted-function-deleted)
 endif()
 
 
 add_subdirectory(vendor)
 
 include_directories(
-  $ {CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/vma/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor/tracy/public
 )
 
 add_subdirectory(source)
