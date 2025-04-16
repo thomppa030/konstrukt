@@ -30,9 +30,16 @@ else()
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 add_subdirectory(vendor)
+
+include_directories(
+  $ {CMAKE_CURRENT_SOURCE_DIR}/vendor/spdlog/include
+)
+
+add_subdirectory(source)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 if(KST_BUILD_RUNTIME)
 add_subdirectory(konstrukt)
