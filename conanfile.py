@@ -37,6 +37,3 @@ class Konstrukt(ConanFile):
 
         # Unit Tests
         self.requires("gtest/1.16.0")
-
-        # performance profiling
-        self.requires("tracy/0.11.1")
